@@ -1,0 +1,73 @@
+plugins {
+	id 'java'
+	id 'war'
+	id 'org.springframework.boot' version '3.3.5'
+	id 'io.spring.dependency-management' version '1.1.6'
+}
+
+description = 'Bootstrap module for running the complete application'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+dependencies {
+	implementation project(':domain')
+	implementation project(':app')
+	implementation project(':infra')
+	implementation project(':interface')
+
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+	// runtimeOnly 'com.h2database:h2'
+	runtimeOnly 'com.mysql:mysql-connector-j'
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-mysql'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+springBoot {
+	buildInfo()
+	mainClass = 'com.base.bootstrap.BootstrapApplication'
+}
+
+task cleanBuild {
+	dependsOn 'clean', 'build'
+	description 'Clean and build the project'
+	group 'build'
+}
+
+task bootRunDev {
+	dependsOn 'bootRun'
+	description 'Run application with development profile'
+	group 'application'
+
+	doFirst {
+		systemProperty 'spring.profiles.active', 'dev'
+	}
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+war {
+	archiveBaseName = 'java-base-ddd'
+	archiveVersion = project.version
+	enabled = true
+}

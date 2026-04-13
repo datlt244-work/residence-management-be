@@ -1,0 +1,24 @@
+plugins {
+    id 'java-library'
+}
+
+// Domain module - Pure domain logic
+description = 'Domain layer containing entities, value objects, and domain services'
+
+dependencies {
+    // Minimal dependencies for domain layer
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework.data:spring-data-commons'
+
+    // Validation API
+    api 'jakarta.validation:jakarta.validation-api'
+
+    // JPA annotations (for entities only)
+    api 'jakarta.persistence:jakarta.persistence-api'
+
+    // Security for UserDetails interface
+    implementation 'org.springframework.security:spring-security-core'
+
+    // Test dependencies
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}

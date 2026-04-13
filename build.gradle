@@ -1,0 +1,91 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.5' apply false
+    id 'io.spring.dependency-management' version '1.1.6' apply false
+}
+
+group = 'com.base'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+// Configuration for all projects (including root)
+allprojects {
+    group = 'com.base'
+    version = '1.0-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+// Configuration for subprojects only
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'io.spring.dependency-management'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom 'org.springframework.boot:spring-boot-dependencies:3.3.5'  // Use stable version
+            mavenBom 'org.testcontainers:testcontainers-bom:1.19.3'
+        }
+    }
+
+    dependencies {
+        // Common dependencies for all modules
+        compileOnly 'org.projectlombok:lombok'
+        compileOnly 'jakarta.persistence:jakarta.persistence-api'
+        annotationProcessor 'org.projectlombok:lombok'
+        annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+
+        // Test dependencies
+        testImplementation platform('org.junit:junit-bom:5.9.1')
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testImplementation 'org.mockito:mockito-core'
+        testImplementation 'org.assertj:assertj-core'
+
+        testCompileOnly 'org.projectlombok:lombok'
+        testAnnotationProcessor 'org.projectlombok:lombok'
+    }
+
+    test {
+        useJUnitPlatform()
+        testLogging {
+            events "passed", "skipped", "failed"
+            exceptionFormat "full"
+        }
+    }
+
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+        options.compilerArgs += [
+                '-parameters',
+                '-Xlint:unchecked',
+                '-Xlint:deprecation'
+        ]
+    }
+}
+
+// Root project specific dependencies
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
