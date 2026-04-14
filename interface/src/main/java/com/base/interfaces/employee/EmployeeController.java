@@ -8,6 +8,7 @@ import com.base.app.employee.command.UpdateEmployeeAdminCommand;
 import com.base.app.employee.dto.EmployeeAdminDetailDto;
 import com.base.app.employee.dto.EmployeeDto;
 import com.base.app.employee.handler.CreateEmployeeHandler;
+import com.base.app.employee.handler.DeleteEmployeeAdminHandler;
 import com.base.app.employee.handler.GetEmployeeAdminDetailHandler;
 import com.base.app.employee.handler.SetEmployeeActiveHandler;
 import com.base.app.employee.handler.UpdateEmployeeAdminHandler;
@@ -32,6 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -58,6 +60,7 @@ public class EmployeeController {
     private final GetEmployeeAdminDetailHandler getEmployeeAdminDetailHandler;
     private final SetEmployeeActiveHandler setEmployeeActiveHandler;
     private final UpdateEmployeeAdminHandler updateEmployeeAdminHandler;
+    private final DeleteEmployeeAdminHandler deleteEmployeeAdminHandler;
 
     @GetMapping("/employees-management")
     @PreAuthorize("hasRole('ADMIN')")
@@ -108,6 +111,22 @@ public class EmployeeController {
             @Valid @RequestBody UpdateEmployeeAdminCommand command) {
         EmployeeDto dto = updateEmployeeAdminHandler.handle(id, command);
         return ResponseEntity.ok(CommonResponse.success("Employee updated successfully", dto));
+    }
+
+    @DeleteMapping("/employees-management/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Delete employee (admin)",
+            description = "Hard delete.")
+    public ResponseEntity<CommonResponse<Void>> deleteEmployeeAdmin(
+            @Parameter(description = "Employee id") @PathVariable final String id,
+            Authentication authentication) {
+        String actorId = null;
+        if (authentication != null && authentication.getPrincipal() instanceof EmployeeEntity principal) {
+            actorId = String.valueOf(principal.getId());
+        }
+        deleteEmployeeAdminHandler.handle(id, actorId);
+        return ResponseEntity.ok(CommonResponse.success("Employee deleted successfully", null));
     }
 
     @PatchMapping("/employees-management/{id}/active")

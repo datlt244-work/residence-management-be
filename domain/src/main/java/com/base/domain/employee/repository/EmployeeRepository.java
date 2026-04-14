@@ -27,4 +27,6 @@ public interface EmployeeRepository {
             String search,
             int page,
             int size);
+
+    void deleteById(EmployeeId id);
 }
