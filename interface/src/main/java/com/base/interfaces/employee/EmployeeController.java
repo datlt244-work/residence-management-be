@@ -7,6 +7,7 @@ import com.base.app.employee.dto.EmployeeAdminDetailDto;
 import com.base.app.employee.dto.EmployeeDto;
 import com.base.app.employee.handler.CreateEmployeeHandler;
 import com.base.app.employee.handler.GetEmployeeAdminDetailHandler;
+import com.base.app.employee.handler.SetEmployeeActiveHandler;
 import com.base.app.employee.handler.UpdateEmployeeProfileHandler;
 import com.base.domain.employee.domain.valueobjects.EmployeeId;
 import com.base.domain.employee.repository.EmployeeRepository;
@@ -14,6 +15,7 @@ import com.base.domain.shared.PageResult;
 import com.base.infra.employee.entity.EmployeeEntity;
 import com.base.interfaces.employee.request.ChangePasswordRequest;
 import com.base.interfaces.employee.request.CreateEmployeeRequest;
+import com.base.interfaces.employee.request.SetEmployeeActiveRequest;
 import com.base.interfaces.employee.request.UpdateEmployeeProfileRequest;
 import com.base.interfaces.shared.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +31,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -51,6 +54,7 @@ public class EmployeeController {
     private final CreateEmployeeHandler createEmployeeHandler;
     private final AdminEmployeeHandler adminEmployeeHandler;
     private final GetEmployeeAdminDetailHandler getEmployeeAdminDetailHandler;
+    private final SetEmployeeActiveHandler setEmployeeActiveHandler;
 
     @GetMapping("/employees-management")
     @PreAuthorize("hasRole('ADMIN')")
@@ -89,6 +93,22 @@ public class EmployeeController {
             @Valid @RequestBody CreateEmployeeRequest request) {
         EmployeeDto dto = createEmployeeHandler.handle(request.toCommand());
         return ResponseEntity.ok(CommonResponse.success("Employee registered successfully", dto));
+    }
+
+    @PatchMapping("/employees-management/{id}/active")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Set employee active flag (admin)",
+            tags = "Admin",
+            description = "Sets is_active from body.active. Inactive employees cannot sign in.")
+    public ResponseEntity<CommonResponse<EmployeeDto>> setEmployeeActive(
+            @Parameter(description = "Employee id") @PathVariable final String id,
+            @Valid @RequestBody SetEmployeeActiveRequest request) {
+        EmployeeDto dto = setEmployeeActiveHandler.handle(id, request.toCommand());
+        String message = Boolean.TRUE.equals(request.active())
+                ? "Employee activated successfully"
+                : "Employee deactivated successfully";
+        return ResponseEntity.ok(CommonResponse.success(message, dto));
     }
 
     @GetMapping("/employees/me")
