@@ -77,8 +77,24 @@ jobs:
           curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared.deb
 
-      - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Configure SSH for Cloudflare Access
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          cat > ~/.ssh/config <<EOF
+          Host cf-deploy
+            HostName ${{ secrets.DEPLOY_HOST_PROD }}
+            User ${{ secrets.DEPLOY_USER }}
+            IdentityFile ~/.ssh/id_rsa
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CF_CLIENT_ID }} --service-token-secret ${{ secrets.CF_CLIENT_SECRET }}
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Deploy over Cloudflare SSH
         env:
           IMAGE_TAG: ${{ needs.build_and_push.outputs.image_tag }}
           KEYS_DIR: ${{ env.KEYS_DIR }}
@@ -91,49 +107,47 @@ jobs:
           JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION }}
           ADMIN_SITE: ${{ secrets.ADMIN_SITE }}
           MANAGER_SITE: ${{ secrets.MANAGER_SITE }}
-        with:
-          host: ${{ secrets.DEPLOY_HOST_PROD }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          proxy_command: |
-            cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CF_CLIENT_ID }} --service-token-secret ${{ secrets.CF_CLIENT_SECRET }}
-          envs: IMAGE_TAG,KEYS_DIR,CONTAINER_NAME,DB_NAME,DB_USER,DB_PASSWORD,DB_HOST,DB_PORT,JWT_EXPIRATION,ADMIN_SITE,MANAGER_SITE
-          script: |
+          JWT_RSA_PRIVATE_KEY_B64: ${{ secrets.JWT_RSA_PRIVATE_KEY_B64 }}
+          JWT_RSA_PUBLIC_KEY_B64: ${{ secrets.JWT_RSA_PUBLIC_KEY_B64 }}
+        run: |
+          set -e
+          printf '%s' "${JWT_RSA_PRIVATE_KEY_B64}" | base64 -d > /tmp/private_key_pkcs8.pem
+          printf '%s' "${JWT_RSA_PUBLIC_KEY_B64}" | base64 -d > /tmp/public_key.pem
+          scp /tmp/private_key_pkcs8.pem cf-deploy:/tmp/private_key_pkcs8.pem
+          scp /tmp/public_key.pem cf-deploy:/tmp/public_key.pem
+          ssh cf-deploy "
             set -e
-            mkdir -p "${KEYS_DIR}"
-            echo "${{ secrets.JWT_RSA_PRIVATE_KEY_B64 }}" | base64 -d > "${KEYS_DIR}/private_key_pkcs8.pem"
-            echo "${{ secrets.JWT_RSA_PUBLIC_KEY_B64 }}" | base64 -d > "${KEYS_DIR}/public_key.pem"
-            chmod 600 "${KEYS_DIR}/private_key_pkcs8.pem"
-            chmod 644 "${KEYS_DIR}/public_key.pem"
-
-            docker pull "${IMAGE_TAG}"
-            docker stop "${CONTAINER_NAME}" || true
-            docker rm "${CONTAINER_NAME}" || true
-
-            docker run -d --name "${CONTAINER_NAME}" \
+            mkdir -p '${KEYS_DIR}'
+            mv /tmp/private_key_pkcs8.pem '${KEYS_DIR}/private_key_pkcs8.pem'
+            mv /tmp/public_key.pem '${KEYS_DIR}/public_key.pem'
+            chmod 600 '${KEYS_DIR}/private_key_pkcs8.pem'
+            chmod 644 '${KEYS_DIR}/public_key.pem'
+            docker pull '${IMAGE_TAG}'
+            docker stop '${CONTAINER_NAME}' || true
+            docker rm '${CONTAINER_NAME}' || true
+            docker run -d --name '${CONTAINER_NAME}' \
               --restart unless-stopped \
               -p 8080:8080 \
               -e TZ=Asia/Ho_Chi_Minh \
-              -e DB_NAME="${DB_NAME}" \
-              -e DB_USER="${DB_USER}" \
-              -e DB_PASSWORD="${DB_PASSWORD}" \
-              -e SPRING_DATASOURCE_URL="jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia%2FHo_Chi_Minh" \
-              -e JWT_EXPIRATION="${JWT_EXPIRATION}" \
-              -e JWT_RSA_PRIVATE_KEY="file:/app/keys/private_key_pkcs8.pem" \
-              -e JWT_RSA_PUBLIC_KEY="file:/app/keys/public_key.pem" \
-              -e ADMIN_SITE="${ADMIN_SITE}" \
-              -e MANAGER_SITE="${MANAGER_SITE}" \
-              -v "${KEYS_DIR}:/app/keys:ro" \
-              "${IMAGE_TAG}"
-
-            for i in $(seq 1 30); do
-              if curl -fsS "http://localhost:8080/actuator/health" | grep -q '"status":"UP"'; then
-                echo "Service is healthy"
+              -e DB_NAME='${DB_NAME}' \
+              -e DB_USER='${DB_USER}' \
+              -e DB_PASSWORD='${DB_PASSWORD}' \
+              -e SPRING_DATASOURCE_URL='jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia%2FHo_Chi_Minh' \
+              -e JWT_EXPIRATION='${JWT_EXPIRATION}' \
+              -e JWT_RSA_PRIVATE_KEY='file:/app/keys/private_key_pkcs8.pem' \
+              -e JWT_RSA_PUBLIC_KEY='file:/app/keys/public_key.pem' \
+              -e ADMIN_SITE='${ADMIN_SITE}' \
+              -e MANAGER_SITE='${MANAGER_SITE}' \
+              -v '${KEYS_DIR}:/app/keys:ro' \
+              '${IMAGE_TAG}'
+            for i in \$(seq 1 30); do
+              if curl -fsS 'http://localhost:8080/actuator/health' | grep -q '\"status\":\"UP\"'; then
+                echo 'Service is healthy'
                 exit 0
               fi
               sleep 2
             done
-
-            echo "Health check failed"
-            docker logs --tail 100 "${CONTAINER_NAME}"
+            echo 'Health check failed'
+            docker logs --tail 100 '${CONTAINER_NAME}'
             exit 1
+          "
