@@ -1,6 +1,7 @@
 package com.base.interfaces.department;
 
 import com.base.app.department.dto.DepartmentListItemDto;
+import com.base.app.department.handler.GetDepartmentAdminDetailHandler;
 import com.base.app.department.handler.ListDepartmentsAdminHandler;
 import com.base.domain.shared.PageResult;
 import com.base.interfaces.shared.response.CommonResponse;
@@ -16,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,6 +33,16 @@ import java.time.LocalDate;
 public class DepartmentController {
 
     private final ListDepartmentsAdminHandler listDepartmentsAdminHandler;
+    private final GetDepartmentAdminDetailHandler getDepartmentAdminDetailHandler;
+
+    @GetMapping("/departments-management/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get department detail (admin)", description = "Returns department by id.")
+    public ResponseEntity<CommonResponse<DepartmentListItemDto>> getDepartmentDetailAdmin(
+            @Parameter(description = "Department id") @PathVariable final String id) {
+        DepartmentListItemDto dto = getDepartmentAdminDetailHandler.handle(id);
+        return ResponseEntity.ok(CommonResponse.success(dto));
+    }
 
     @GetMapping("/departments-management")
     @PreAuthorize("hasRole('ADMIN')")
