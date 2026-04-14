@@ -57,6 +57,14 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
     }
 
     @Override
+    public boolean existsByDepartmentId(final Integer departmentId) {
+        if (departmentId == null) {
+            return false;
+        }
+        return jpaRepository.existsByDepartmentId(departmentId);
+    }
+
+    @Override
     public PageResult<Employee> searchForAdmin(
             final EmployeeRole roleFilter,
             final Boolean active,

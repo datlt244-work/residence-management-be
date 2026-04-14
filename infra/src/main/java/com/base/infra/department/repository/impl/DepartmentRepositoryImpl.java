@@ -94,6 +94,11 @@ public class DepartmentRepositoryImpl implements DepartmentRepository {
                 pageResult.getTotalPages());
     }
 
+    @Override
+    public void deleteById(final DepartmentId id) {
+        jpaRepository.deleteById(Integer.parseInt(id.value()));
+    }
+
     private static String toLikePattern(final String raw) {
         if (raw == null || raw.isBlank()) {
             return null;

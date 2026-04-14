@@ -4,6 +4,7 @@ import com.base.app.department.command.CreateDepartmentCommand;
 import com.base.app.department.command.UpdateDepartmentAdminCommand;
 import com.base.app.department.dto.DepartmentListItemDto;
 import com.base.app.department.handler.CreateDepartmentHandler;
+import com.base.app.department.handler.DeleteDepartmentAdminHandler;
 import com.base.app.department.handler.GetDepartmentAdminDetailHandler;
 import com.base.app.department.handler.ListDepartmentsAdminHandler;
 import com.base.app.department.handler.UpdateDepartmentAdminHandler;
@@ -21,6 +22,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,6 +46,18 @@ public class DepartmentController {
     private final GetDepartmentAdminDetailHandler getDepartmentAdminDetailHandler;
     private final UpdateDepartmentAdminHandler updateDepartmentAdminHandler;
     private final CreateDepartmentHandler createDepartmentHandler;
+    private final DeleteDepartmentAdminHandler deleteDepartmentAdminHandler;
+
+    @DeleteMapping("/departments-management/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Delete department (admin)",
+            description = "Hard delete. Not allowed while any employee references this department.")
+    public ResponseEntity<CommonResponse<Void>> deleteDepartmentAdmin(
+            @Parameter(description = "Department id") @PathVariable final String id) {
+        deleteDepartmentAdminHandler.handle(id);
+        return ResponseEntity.ok(CommonResponse.success("Department deleted successfully", null));
+    }
 
     @PostMapping("/departments-management")
     @PreAuthorize("hasRole('ADMIN')")
