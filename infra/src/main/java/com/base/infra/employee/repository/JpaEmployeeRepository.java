@@ -16,6 +16,8 @@ public interface JpaEmployeeRepository extends JpaRepository<EmployeeEntity, Int
 
     boolean existsByEmail(String email);
 
+    boolean existsByDepartmentId(Integer departmentId);
+
     @Query(
             value = """
                     SELECT e FROM EmployeeEntity e

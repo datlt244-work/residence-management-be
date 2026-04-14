@@ -18,6 +18,8 @@ public interface EmployeeRepository {
 
     boolean existsByEmail(Email email);
 
+    boolean existsByDepartmentId(Integer departmentId);
+
     /**
      * Admin list: paged employees with optional role, active flag, and text search (email, full name, phone).
      */

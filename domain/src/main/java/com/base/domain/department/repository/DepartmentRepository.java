@@ -24,4 +24,6 @@ public interface DepartmentRepository {
             LocalDate createdToInclusive,
             int page,
             int size);
+
+    void deleteById(DepartmentId id);
 }
