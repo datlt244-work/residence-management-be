@@ -117,8 +117,7 @@ public class EmployeeController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Delete employee (admin)",
-            description = "Hard delete. Fails if the employee is referenced (e.g. apartment created_by). "
-                    + "Cannot delete your own account.")
+            description = "Hard delete.")
     public ResponseEntity<CommonResponse<Void>> deleteEmployeeAdmin(
             @Parameter(description = "Employee id") @PathVariable final String id,
             Authentication authentication) {
