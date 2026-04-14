@@ -3,8 +3,10 @@ package com.base.interfaces.employee;
 import com.base.app.admin.dto.AdminEmployeeDto;
 import com.base.app.admin.handler.AdminEmployeeHandler;
 import com.base.app.auth.handler.ChangePasswordHandler;
+import com.base.app.employee.dto.EmployeeAdminDetailDto;
 import com.base.app.employee.dto.EmployeeDto;
 import com.base.app.employee.handler.CreateEmployeeHandler;
+import com.base.app.employee.handler.GetEmployeeAdminDetailHandler;
 import com.base.app.employee.handler.UpdateEmployeeProfileHandler;
 import com.base.domain.employee.domain.valueobjects.EmployeeId;
 import com.base.domain.employee.repository.EmployeeRepository;
@@ -27,6 +29,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,6 +50,7 @@ public class EmployeeController {
     private final ChangePasswordHandler changePasswordHandler;
     private final CreateEmployeeHandler createEmployeeHandler;
     private final AdminEmployeeHandler adminEmployeeHandler;
+    private final GetEmployeeAdminDetailHandler getEmployeeAdminDetailHandler;
 
     @GetMapping("/employees-management")
     @PreAuthorize("hasRole('ADMIN')")
@@ -64,6 +68,18 @@ public class EmployeeController {
 
         PageResult<AdminEmployeeDto> data = adminEmployeeHandler.handle(page, size, search, role, active);
         return ResponseEntity.ok(CommonResponse.success(data));
+    }
+
+    @GetMapping("/employees-management/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Get employee detail (admin)",
+            tags = "Admin",
+            description = "Admin only: profile fields with department name when department exists.")
+    public ResponseEntity<CommonResponse<EmployeeAdminDetailDto>> getEmployeeDetailAdmin(
+            @Parameter(description = "Employee id") @PathVariable final String id) {
+        EmployeeAdminDetailDto detail = getEmployeeAdminDetailHandler.handle(id);
+        return ResponseEntity.ok(CommonResponse.success(detail));
     }
 
     @PostMapping("/employees-management")
