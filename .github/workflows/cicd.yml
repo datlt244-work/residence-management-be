@@ -56,6 +56,7 @@ jobs:
           SHORT_SHA="${GITHUB_SHA::7}"
           echo "image_tag=${IMAGE_NAME}:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
           echo "latest_tag=${IMAGE_NAME}:prod-latest" >> "$GITHUB_OUTPUT"
+          echo "Resolved image_tag=${IMAGE_NAME}:${SHORT_SHA}"
 
       - name: Build Docker image
         run: docker build -t "${{ steps.image_meta.outputs.image_tag }}" -t "${{ steps.image_meta.outputs.latest_tag }}" .
@@ -111,6 +112,16 @@ jobs:
           JWT_RSA_PUBLIC_KEY_B64: ${{ secrets.JWT_RSA_PUBLIC_KEY_B64 }}
         run: |
           set -e
+          echo "Deploy IMAGE_TAG=[${IMAGE_TAG}]"
+          if [ -z "${IMAGE_TAG}" ]; then
+            echo "ERROR: IMAGE_TAG is empty"
+            exit 1
+          fi
+          if ! echo "${IMAGE_TAG}" | grep -Eq '^[a-z0-9]+([._-][a-z0-9]+)*/[a-z0-9]+([._-][a-z0-9]+)*:[A-Za-z0-9._-]+$'; then
+            echo "ERROR: IMAGE_TAG has invalid format: ${IMAGE_TAG}"
+            echo "Expected format: dockeruser/repository:tag"
+            exit 1
+          fi
           printf '%s' "${JWT_RSA_PRIVATE_KEY_B64}" | base64 -d > /tmp/private_key_pkcs8.pem
           printf '%s' "${JWT_RSA_PUBLIC_KEY_B64}" | base64 -d > /tmp/public_key.pem
           scp /tmp/private_key_pkcs8.pem cf-deploy:/tmp/private_key_pkcs8.pem
