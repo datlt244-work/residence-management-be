@@ -3,10 +3,14 @@ package com.base.interfaces.employee;
 import com.base.app.admin.dto.AdminEmployeeDto;
 import com.base.app.admin.handler.AdminEmployeeHandler;
 import com.base.app.auth.handler.ChangePasswordHandler;
+import com.base.app.employee.command.SetEmployeeActiveCommand;
+import com.base.app.employee.command.UpdateEmployeeAdminCommand;
 import com.base.app.employee.dto.EmployeeAdminDetailDto;
 import com.base.app.employee.dto.EmployeeDto;
 import com.base.app.employee.handler.CreateEmployeeHandler;
 import com.base.app.employee.handler.GetEmployeeAdminDetailHandler;
+import com.base.app.employee.handler.SetEmployeeActiveHandler;
+import com.base.app.employee.handler.UpdateEmployeeAdminHandler;
 import com.base.app.employee.handler.UpdateEmployeeProfileHandler;
 import com.base.domain.employee.domain.valueobjects.EmployeeId;
 import com.base.domain.employee.repository.EmployeeRepository;
@@ -29,6 +33,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -51,12 +56,13 @@ public class EmployeeController {
     private final CreateEmployeeHandler createEmployeeHandler;
     private final AdminEmployeeHandler adminEmployeeHandler;
     private final GetEmployeeAdminDetailHandler getEmployeeAdminDetailHandler;
+    private final SetEmployeeActiveHandler setEmployeeActiveHandler;
+    private final UpdateEmployeeAdminHandler updateEmployeeAdminHandler;
 
     @GetMapping("/employees-management")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "List employees (admin)",
-            tags = "Admin",
             description = "Paginated employees. Optional search, role, active.")
     public ResponseEntity<CommonResponse<PageResult<AdminEmployeeDto>>> listEmployeesAdmin(
             @Parameter(description = "Zero-based page index") @RequestParam(defaultValue = "0") @Min(0) final int page,
@@ -74,7 +80,6 @@ public class EmployeeController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Get employee detail (admin)",
-            tags = "Admin",
             description = "Admin only: profile fields with department name when department exists.")
     public ResponseEntity<CommonResponse<EmployeeAdminDetailDto>> getEmployeeDetailAdmin(
             @Parameter(description = "Employee id") @PathVariable final String id) {
@@ -84,11 +89,40 @@ public class EmployeeController {
 
     @PostMapping("/employees-management")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Create employee", tags = "Admin")
+    @Operation(summary = "Create employee")
     public ResponseEntity<CommonResponse<EmployeeDto>> createEmployee(
             @Valid @RequestBody CreateEmployeeRequest request) {
         EmployeeDto dto = createEmployeeHandler.handle(request.toCommand());
         return ResponseEntity.ok(CommonResponse.success("Employee registered successfully", dto));
+    }
+
+    @PutMapping("/employees-management/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Update employee (admin)",
+            description =
+                    "Updates email, name, phone, role, department. To change password, send password and "
+                            + "confirmPassword (same value); omit both to leave password unchanged.")
+    public ResponseEntity<CommonResponse<EmployeeDto>> updateEmployeeAdmin(
+            @Parameter(description = "Employee id") @PathVariable final String id,
+            @Valid @RequestBody UpdateEmployeeAdminCommand command) {
+        EmployeeDto dto = updateEmployeeAdminHandler.handle(id, command);
+        return ResponseEntity.ok(CommonResponse.success("Employee updated successfully", dto));
+    }
+
+    @PatchMapping("/employees-management/{id}/active")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Set employee active flag (admin)",
+            description = "Sets is_active from body.active. Inactive employees cannot sign in.")
+    public ResponseEntity<CommonResponse<EmployeeDto>> setEmployeeActive(
+            @Parameter(description = "Employee id") @PathVariable final String id,
+            @Valid @RequestBody SetEmployeeActiveCommand command) {
+        EmployeeDto dto = setEmployeeActiveHandler.handle(id, command);
+        String message = Boolean.TRUE.equals(command.active())
+                ? "Employee activated successfully"
+                : "Employee deactivated successfully";
+        return ResponseEntity.ok(CommonResponse.success(message, dto));
     }
 
     @GetMapping("/employees/me")
