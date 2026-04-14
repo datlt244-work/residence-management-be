@@ -17,10 +17,6 @@ public interface DepartmentRepository {
 
     boolean existsByCode(String code);
 
-    /**
-     * Paged list: optional partial match on {@code code} and/or {@code name} (case-insensitive),
-     * optional inclusive date range on {@code createdAt} ({@code createdFrom} / {@code createdTo}).
-     */
     PageResult<Department> searchDepartments(
             String codeSearch,
             String nameSearch,
