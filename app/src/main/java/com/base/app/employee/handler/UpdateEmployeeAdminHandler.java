@@ -14,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -27,7 +29,7 @@ public class UpdateEmployeeAdminHandler {
         Employee employee = employeeRepository.findById(EmployeeId.of(employeeId))
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found: " + employeeId));
 
-        Email newEmail = Email.of(command.email());
+        Email newEmail = Email.of(command.email().strip());
         employeeRepository.findByEmail(newEmail).ifPresent(other -> {
             if (!other.getId().equals(employee.getId())) {
                 throw new IllegalArgumentException("Employee with this email already exists: " + newEmail.value());
@@ -36,28 +38,17 @@ public class UpdateEmployeeAdminHandler {
 
         EmployeeRole role = EmployeeRole.STAFF;
         if (command.role() != null && !command.role().isBlank()) {
-            try {
-                role = EmployeeRole.valueOf(command.role());
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Invalid role. Valid values: ADMIN, MANAGER, STAFF");
-            }
+            role = EmployeeRole.valueOf(command.role().strip().toUpperCase(Locale.ROOT));
         }
 
         employee.setEmail(newEmail);
-        employee.setFullName(command.fullName());
-        employee.setPhone(command.phone());
+        employee.setFullName(command.fullName().strip());
+        String phone = command.phone();
+        employee.setPhone(phone == null || phone.isBlank() ? null : phone.strip());
         employee.setDepartmentId(command.departmentId());
         employee.setRole(role);
 
-        final boolean hasNewPassword = command.password() != null;
-        final boolean hasConfirm = command.confirmPassword() != null;
-        if (hasNewPassword != hasConfirm) {
-            throw new IllegalArgumentException("Password and confirm password must both be provided to change password");
-        }
-        if (hasNewPassword) {
-            if (!command.password().equals(command.confirmPassword())) {
-                throw new IllegalArgumentException("Password and confirm password do not match");
-            }
+        if (command.password() != null) {
             Password.raw(command.password());
             employee.changePassword(passwordEncoder.encode(command.password()));
         }

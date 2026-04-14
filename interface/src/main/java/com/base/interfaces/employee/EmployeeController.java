@@ -3,6 +3,8 @@ package com.base.interfaces.employee;
 import com.base.app.admin.dto.AdminEmployeeDto;
 import com.base.app.admin.handler.AdminEmployeeHandler;
 import com.base.app.auth.handler.ChangePasswordHandler;
+import com.base.app.employee.command.SetEmployeeActiveCommand;
+import com.base.app.employee.command.UpdateEmployeeAdminCommand;
 import com.base.app.employee.dto.EmployeeAdminDetailDto;
 import com.base.app.employee.dto.EmployeeDto;
 import com.base.app.employee.handler.CreateEmployeeHandler;
@@ -16,8 +18,6 @@ import com.base.domain.shared.PageResult;
 import com.base.infra.employee.entity.EmployeeEntity;
 import com.base.interfaces.employee.request.ChangePasswordRequest;
 import com.base.interfaces.employee.request.CreateEmployeeRequest;
-import com.base.interfaces.employee.request.SetEmployeeActiveRequest;
-import com.base.interfaces.employee.request.UpdateEmployeeAdminRequest;
 import com.base.interfaces.employee.request.UpdateEmployeeProfileRequest;
 import com.base.interfaces.shared.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -105,8 +105,8 @@ public class EmployeeController {
                             + "confirmPassword (same value); omit both to leave password unchanged.")
     public ResponseEntity<CommonResponse<EmployeeDto>> updateEmployeeAdmin(
             @Parameter(description = "Employee id") @PathVariable final String id,
-            @Valid @RequestBody UpdateEmployeeAdminRequest request) {
-        EmployeeDto dto = updateEmployeeAdminHandler.handle(id, request.toCommand());
+            @Valid @RequestBody UpdateEmployeeAdminCommand command) {
+        EmployeeDto dto = updateEmployeeAdminHandler.handle(id, command);
         return ResponseEntity.ok(CommonResponse.success("Employee updated successfully", dto));
     }
 
@@ -117,9 +117,9 @@ public class EmployeeController {
             description = "Sets is_active from body.active. Inactive employees cannot sign in.")
     public ResponseEntity<CommonResponse<EmployeeDto>> setEmployeeActive(
             @Parameter(description = "Employee id") @PathVariable final String id,
-            @Valid @RequestBody SetEmployeeActiveRequest request) {
-        EmployeeDto dto = setEmployeeActiveHandler.handle(id, request.toCommand());
-        String message = Boolean.TRUE.equals(request.active())
+            @Valid @RequestBody SetEmployeeActiveCommand command) {
+        EmployeeDto dto = setEmployeeActiveHandler.handle(id, command);
+        String message = Boolean.TRUE.equals(command.active())
                 ? "Employee activated successfully"
                 : "Employee deactivated successfully";
         return ResponseEntity.ok(CommonResponse.success(message, dto));
