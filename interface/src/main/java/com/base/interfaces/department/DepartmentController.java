@@ -1,14 +1,17 @@
 package com.base.interfaces.department;
 
 import com.base.app.department.dto.DepartmentListItemDto;
+import com.base.app.department.command.UpdateDepartmentAdminCommand;
 import com.base.app.department.handler.GetDepartmentAdminDetailHandler;
 import com.base.app.department.handler.ListDepartmentsAdminHandler;
+import com.base.app.department.handler.UpdateDepartmentAdminHandler;
 import com.base.domain.shared.PageResult;
 import com.base.interfaces.shared.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,6 +39,17 @@ public class DepartmentController {
 
     private final ListDepartmentsAdminHandler listDepartmentsAdminHandler;
     private final GetDepartmentAdminDetailHandler getDepartmentAdminDetailHandler;
+    private final UpdateDepartmentAdminHandler updateDepartmentAdminHandler;
+
+    @PutMapping("/departments-management/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update department (admin)", description = "Updates department code and name.")
+    public ResponseEntity<CommonResponse<DepartmentListItemDto>> updateDepartmentAdmin(
+            @Parameter(description = "Department id") @PathVariable final String id,
+            @Valid @RequestBody UpdateDepartmentAdminCommand command) {
+        DepartmentListItemDto dto = updateDepartmentAdminHandler.handle(id, command);
+        return ResponseEntity.ok(CommonResponse.success("Department updated successfully", dto));
+    }
 
     @GetMapping("/departments-management/{id}")
     @PreAuthorize("hasRole('ADMIN')")
