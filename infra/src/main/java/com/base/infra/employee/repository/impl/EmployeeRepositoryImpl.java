@@ -93,6 +93,11 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
                 employeeEntityPage.getTotalPages());
     }
 
+    @Override
+    public void deleteById(final EmployeeId id) {
+        jpaRepository.deleteById(Integer.parseInt(id.value()));
+    }
+
     private static String escapeLikePattern(final String raw) {
         return raw.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
