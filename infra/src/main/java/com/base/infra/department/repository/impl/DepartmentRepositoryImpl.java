@@ -27,7 +27,15 @@ public class DepartmentRepositoryImpl implements DepartmentRepository {
     private final DepartmentMapper mapper;
 
     @Override
-    public Department save(Department department) {
+    public Department save(final Department department) {
+        if (department.getId() != null) {
+            final int id = Integer.parseInt(department.getId());
+            DepartmentEntity managed = jpaRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Department not found for id: " + id));
+            managed.setCode(department.getCode());
+            managed.setName(department.getName());
+            return mapper.toDomain(jpaRepository.save(managed));
+        }
         DepartmentEntity entity = mapper.toEntity(department);
         DepartmentEntity saved = jpaRepository.save(entity);
         return mapper.toDomain(saved);
