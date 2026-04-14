@@ -72,3 +72,7 @@ war {
 	archiveVersion = project.version
 	enabled = true
 }
+
+tasks.named('bootWar') {
+	archiveFileName = 'application.war'
+}

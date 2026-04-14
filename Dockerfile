@@ -29,7 +29,7 @@ WORKDIR /app
 
 RUN addgroup -S spring && adduser -S spring -G spring
 
-COPY --from=builder /app/bootstrap/build/libs/java-base-ddd-*.war app.war
+COPY --from=builder /app/bootstrap/build/libs/application.war app.war
 
 RUN chown spring:spring app.war
 
