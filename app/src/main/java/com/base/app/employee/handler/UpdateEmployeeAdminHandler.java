@@ -36,9 +36,13 @@ public class UpdateEmployeeAdminHandler {
             }
         });
 
-        EmployeeRole role = EmployeeRole.STAFF;
+        EmployeeRole role = employee.getRole();
         if (command.role() != null && !command.role().isBlank()) {
-            role = EmployeeRole.valueOf(command.role().strip().toUpperCase(Locale.ROOT));
+            try {
+                role = EmployeeRole.valueOf(command.role());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid role. Valid values: ADMIN, MANAGER, STAFF");
+            }
         }
 
         employee.setEmail(newEmail);
