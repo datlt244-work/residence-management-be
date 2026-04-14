@@ -86,12 +86,11 @@ jobs:
           JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION }}
           ADMIN_SITE: ${{ secrets.ADMIN_SITE }}
           MANAGER_SITE: ${{ secrets.MANAGER_SITE }}
-          INFOBIP_API_KEY: ${{ secrets.INFOBIP_API_KEY }}
         with:
           host: ${{ secrets.DEPLOY_HOST_PROD }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: IMAGE_TAG,KEYS_DIR,CONTAINER_NAME,DB_NAME,DB_USER,DB_PASSWORD,DB_HOST,DB_PORT,JWT_EXPIRATION,ADMIN_SITE,MANAGER_SITE,INFOBIP_API_KEY
+          envs: IMAGE_TAG,KEYS_DIR,CONTAINER_NAME,DB_NAME,DB_USER,DB_PASSWORD,DB_HOST,DB_PORT,JWT_EXPIRATION,ADMIN_SITE,MANAGER_SITE
           script: |
             set -e
             mkdir -p "${KEYS_DIR}"
@@ -117,7 +116,6 @@ jobs:
               -e JWT_RSA_PUBLIC_KEY="file:/app/keys/public_key.pem" \
               -e ADMIN_SITE="${ADMIN_SITE}" \
               -e MANAGER_SITE="${MANAGER_SITE}" \
-              -e INFOBIP_API_KEY="${INFOBIP_API_KEY}" \
               -v "${KEYS_DIR}:/app/keys:ro" \
               "${IMAGE_TAG}"
 
