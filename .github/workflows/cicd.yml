@@ -128,11 +128,12 @@ jobs:
           scp /tmp/public_key.pem cf-deploy:/tmp/public_key.pem
           ssh cf-deploy "
             set -e
-            mkdir -p '${KEYS_DIR}'
-            mv /tmp/private_key_pkcs8.pem '${KEYS_DIR}/private_key_pkcs8.pem'
-            mv /tmp/public_key.pem '${KEYS_DIR}/public_key.pem'
-            chmod 600 '${KEYS_DIR}/private_key_pkcs8.pem'
-            chmod 644 '${KEYS_DIR}/public_key.pem'
+            sudo mkdir -p '${KEYS_DIR}'
+            sudo mv /tmp/private_key_pkcs8.pem '${KEYS_DIR}/private_key_pkcs8.pem'
+            sudo mv /tmp/public_key.pem '${KEYS_DIR}/public_key.pem'
+            sudo chmod 755 '${KEYS_DIR}'
+            sudo chmod 644 '${KEYS_DIR}/private_key_pkcs8.pem'
+            sudo chmod 644 '${KEYS_DIR}/public_key.pem'
             docker pull '${IMAGE_TAG}'
             docker stop '${CONTAINER_NAME}' || true
             docker rm '${CONTAINER_NAME}' || true
