@@ -65,6 +65,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(List.of(
                 "https://admin-datlt244.io.vn",
+                "https://*.admin-datlt244.io.vn",
                 "http://localhost:*",
                 "https://localhost:*",
                 "http://127.0.0.1:*"));
