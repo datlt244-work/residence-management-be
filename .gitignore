@@ -55,3 +55,4 @@ bin/
 /bootstrap/src/main/resources/keys/public_key.pem
 
 *.yml
+!/.github/workflows/*.yml
