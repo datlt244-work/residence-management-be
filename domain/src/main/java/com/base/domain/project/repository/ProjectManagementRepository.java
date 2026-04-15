@@ -8,4 +8,8 @@ public interface ProjectManagementRepository {
     List<Project> listSidebarTree(String nameSearch, String statusFilter);
 
     Project save(Project project);
+
+    Project updateProjectName(String projectId, String newName);
+
+    Project updateProjectStatus(String projectId, String status);
 }
