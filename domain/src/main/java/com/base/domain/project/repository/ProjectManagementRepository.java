@@ -12,4 +12,10 @@ public interface ProjectManagementRepository {
     Project updateProjectName(String projectId, String newName);
 
     Project updateProjectStatus(String projectId, String status);
+
+    boolean existsById(String projectId);
+
+    boolean existsApartmentsForProject(String projectId);
+
+    void deleteById(String projectId);
 }

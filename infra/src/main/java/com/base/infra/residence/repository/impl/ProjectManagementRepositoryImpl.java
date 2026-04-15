@@ -7,6 +7,7 @@ import com.base.domain.project.repository.ProjectManagementRepository;
 import com.base.infra.residence.entity.ApartmentTypeEntity;
 import com.base.infra.residence.entity.ProjectEntity;
 import com.base.infra.residence.entity.ZoneEntity;
+import com.base.infra.residence.repository.JpaApartmentRepository;
 import com.base.infra.residence.repository.JpaProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -21,6 +22,7 @@ import java.util.Locale;
 public class ProjectManagementRepositoryImpl implements ProjectManagementRepository {
 
     private final JpaProjectRepository jpaProjectRepository;
+    private final JpaApartmentRepository jpaApartmentRepository;
 
     @Override
     @Transactional
@@ -58,6 +60,25 @@ public class ProjectManagementRepositoryImpl implements ProjectManagementReposit
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid project id: " + id);
         }
+    }
+
+    @Override
+    public boolean existsById(final String projectId) {
+        return jpaProjectRepository.existsById(parseProjectId(projectId));
+    }
+
+    @Override
+    public boolean existsApartmentsForProject(final String projectId) {
+        return jpaApartmentRepository.existsByProject_Id(parseProjectId(projectId));
+    }
+
+    @Override
+    public void deleteById(final String projectId) {
+        final int pk = parseProjectId(projectId);
+        if (!jpaProjectRepository.existsById(pk)) {
+            throw new IllegalArgumentException("Project not found: " + projectId);
+        }
+        jpaProjectRepository.deleteById(pk);
     }
 
     @Override
