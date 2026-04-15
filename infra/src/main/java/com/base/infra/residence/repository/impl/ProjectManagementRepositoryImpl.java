@@ -31,6 +31,26 @@ public class ProjectManagementRepositoryImpl implements ProjectManagementReposit
     }
 
     @Override
+    @Transactional
+    public Project updateProjectName(final String projectId, final String newName) {
+        final int pk = parseProjectId(projectId);
+        ProjectEntity entity = jpaProjectRepository
+                .findById(pk)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
+        entity.setName(newName);
+        ProjectEntity saved = jpaProjectRepository.save(entity);
+        return toDomain(saved);
+    }
+
+    private static int parseProjectId(final String id) {
+        try {
+            return Integer.parseInt(id.strip());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid project id: " + id);
+        }
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<Project> listSidebarTree(final String nameSearch, final String statusFilter) {
         final String namePattern;
