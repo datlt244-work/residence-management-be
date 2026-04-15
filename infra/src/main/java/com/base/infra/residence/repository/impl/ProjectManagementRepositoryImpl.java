@@ -23,6 +23,23 @@ public class ProjectManagementRepositoryImpl implements ProjectManagementReposit
     private final JpaProjectRepository jpaProjectRepository;
 
     @Override
+    @Transactional
+    public Project save(final Project project) {
+        ProjectEntity entity = toNewEntity(project);
+        ProjectEntity saved = jpaProjectRepository.save(entity);
+        return toDomain(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByCode(final String code) {
+        if (code == null || code.isBlank()) {
+            return false;
+        }
+        return jpaProjectRepository.existsByCode(code);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<Project> listSidebarTree(final String nameSearch, final String statusFilter) {
         final String namePattern;
@@ -42,6 +59,15 @@ public class ProjectManagementRepositoryImpl implements ProjectManagementReposit
             out.add(toDomain(p));
         }
         return out;
+    }
+
+    private static ProjectEntity toNewEntity(final Project domain) {
+        ProjectEntity e = new ProjectEntity();
+        e.setCode(domain.getCode());
+        e.setName(domain.getName());
+        e.setStatus(domain.getStatus() != null ? domain.getStatus() : "ACTIVE");
+        e.setDisplayOrder(domain.getDisplayOrder() != null ? domain.getDisplayOrder() : 0);
+        return e;
     }
 
     private static Project toDomain(final ProjectEntity p) {

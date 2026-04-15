@@ -23,4 +23,14 @@ public class Project extends BaseDomain {
             String id, String code, String name, Integer displayOrder, List<ProjectApartmentType> apartmentTypes) {}
 
     public record ProjectApartmentType(String id, String code, String name, Integer displayOrder) {}
+
+    public static Project createNew(final String code, final String name) {
+        Project project = new Project();
+        project.setCode(code);
+        project.setName(name);
+        project.setStatus("ACTIVE");
+        project.setDisplayOrder(0);
+        project.setZones(new ArrayList<>());
+        return project;
+    }
 }
