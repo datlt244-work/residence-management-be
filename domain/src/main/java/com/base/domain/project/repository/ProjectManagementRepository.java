@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface ProjectManagementRepository {
     List<Project> listSidebarTree(String nameSearch, String statusFilter);
+
+    Project save(Project project);
 }
