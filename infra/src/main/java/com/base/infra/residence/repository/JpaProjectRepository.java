@@ -9,8 +9,6 @@ import java.util.List;
 
 public interface JpaProjectRepository extends JpaRepository<ProjectEntity, Integer> {
 
-    boolean existsByCode(String code);
-
     @Query(
             """
             SELECT DISTINCT p FROM ProjectEntity p

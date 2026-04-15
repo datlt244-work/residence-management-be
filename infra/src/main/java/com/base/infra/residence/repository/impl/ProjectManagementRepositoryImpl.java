@@ -32,15 +32,6 @@ public class ProjectManagementRepositoryImpl implements ProjectManagementReposit
 
     @Override
     @Transactional(readOnly = true)
-    public boolean existsByCode(final String code) {
-        if (code == null || code.isBlank()) {
-            return false;
-        }
-        return jpaProjectRepository.existsByCode(code);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public List<Project> listSidebarTree(final String nameSearch, final String statusFilter) {
         final String namePattern;
         if (nameSearch != null && !nameSearch.isBlank()) {

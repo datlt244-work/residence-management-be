@@ -58,7 +58,7 @@ public class ProjectManagementController {
     @Operation(
             summary = "Create project (admin)",
             description =
-                    "Creates a project with display name. Optional unique code (max 50); if omitted, code is derived from name. "
+                    "Creates a project with display name and unique code. "
                             + "Status defaults to ACTIVE, displayOrder to 0.")
     public ResponseEntity<CommonResponse<ProjectManagementSidebarDto>> createProjectAdmin(
             @Valid @RequestBody final CreateProjectCommand command) {
