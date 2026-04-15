@@ -3,6 +3,7 @@ package com.base.interfaces.project;
 import com.base.app.project.dto.ProjectManagementSidebarDto;
 import com.base.app.project.handler.CreateProjectCommand;
 import com.base.app.project.handler.CreateProjectHandler;
+import com.base.app.project.handler.DeleteProjectAdminHandler;
 import com.base.app.project.handler.ListProjectsManagementHandler;
 import com.base.app.project.handler.SetProjectActiveCommand;
 import com.base.app.project.handler.SetProjectActiveHandler;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +44,7 @@ public class ProjectManagementController {
     private final CreateProjectHandler createProjectHandler;
     private final UpdateProjectHandler updateProjectHandler;
     private final SetProjectActiveHandler setProjectActiveHandler;
+    private final DeleteProjectAdminHandler deleteProjectAdminHandler;
 
     @GetMapping("/projects-management")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
@@ -99,5 +102,18 @@ public class ProjectManagementController {
                 ? "Project activated successfully"
                 : "Project deactivated successfully";
         return ResponseEntity.ok(CommonResponse.success(message, dto));
+    }
+
+    @DeleteMapping("/projects-management/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Delete project (admin)",
+            description =
+                    "Hard delete when the project has no apartments. Zones and apartment types cascade; "
+                            + "apartments block delete until removed.")
+    public ResponseEntity<CommonResponse<Void>> deleteProjectAdmin(
+            @Parameter(description = "Project id") @PathVariable final String id) {
+        deleteProjectAdminHandler.handle(id);
+        return ResponseEntity.ok(CommonResponse.success("Project deleted successfully", null));
     }
 }
