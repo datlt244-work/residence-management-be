@@ -4,6 +4,8 @@ import com.base.app.project.dto.ProjectManagementSidebarDto;
 import com.base.app.project.handler.CreateProjectCommand;
 import com.base.app.project.handler.CreateProjectHandler;
 import com.base.app.project.handler.ListProjectsManagementHandler;
+import com.base.app.project.handler.SetProjectActiveCommand;
+import com.base.app.project.handler.SetProjectActiveHandler;
 import com.base.app.project.handler.UpdateProjectCommand;
 import com.base.app.project.handler.UpdateProjectHandler;
 import com.base.interfaces.shared.response.CommonResponse;
@@ -17,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -38,6 +41,7 @@ public class ProjectManagementController {
     private final ListProjectsManagementHandler listProjectsManagementHandler;
     private final CreateProjectHandler createProjectHandler;
     private final UpdateProjectHandler updateProjectHandler;
+    private final SetProjectActiveHandler setProjectActiveHandler;
 
     @GetMapping("/projects-management")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
@@ -79,5 +83,21 @@ public class ProjectManagementController {
             @Valid @RequestBody final UpdateProjectCommand command) {
         ProjectManagementSidebarDto dto = updateProjectHandler.handle(id, command);
         return ResponseEntity.ok(CommonResponse.success("Project updated successfully", dto));
+    }
+
+    @PatchMapping("/projects-management/{id}/active")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Set project active / inactive (admin)",
+            description =
+                    "Sets project status from body.active: true → ACTIVE, false → INACTIVE (stored in projects.status).")
+    public ResponseEntity<CommonResponse<ProjectManagementSidebarDto>> setProjectActive(
+            @Parameter(description = "Project id") @PathVariable final String id,
+            @Valid @RequestBody final SetProjectActiveCommand command) {
+        ProjectManagementSidebarDto dto = setProjectActiveHandler.handle(id, command);
+        String message = Boolean.TRUE.equals(command.active())
+                ? "Project activated successfully"
+                : "Project deactivated successfully";
+        return ResponseEntity.ok(CommonResponse.success(message, dto));
     }
 }

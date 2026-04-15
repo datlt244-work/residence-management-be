@@ -31,13 +31,23 @@ public class ProjectManagementRepositoryImpl implements ProjectManagementReposit
     }
 
     @Override
-    @Transactional
     public Project updateProjectName(final String projectId, final String newName) {
         final int pk = parseProjectId(projectId);
         ProjectEntity entity = jpaProjectRepository
                 .findById(pk)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
         entity.setName(newName);
+        ProjectEntity saved = jpaProjectRepository.save(entity);
+        return toDomain(saved);
+    }
+
+    @Override
+    public Project updateProjectStatus(final String projectId, final String status) {
+        final int pk = parseProjectId(projectId);
+        ProjectEntity entity = jpaProjectRepository
+                .findById(pk)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
+        entity.setStatus(status);
         ProjectEntity saved = jpaProjectRepository.save(entity);
         return toDomain(saved);
     }

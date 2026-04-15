@@ -10,4 +10,6 @@ public interface ProjectManagementRepository {
     Project save(Project project);
 
     Project updateProjectName(String projectId, String newName);
+
+    Project updateProjectStatus(String projectId, String status);
 }
