@@ -8,10 +8,15 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "zones")
@@ -36,4 +41,8 @@ public class ZoneEntity {
 
     @Column(name = "display_order")
     private Integer displayOrder = 0;
+
+    @OneToMany(mappedBy = "zone", fetch = FetchType.LAZY)
+    @OrderBy("displayOrder ASC, id ASC")
+    private Set<ApartmentTypeEntity> apartmentTypes = new LinkedHashSet<>();
 }
