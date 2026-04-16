@@ -9,4 +9,10 @@ public interface ZoneManagementRepository {
     Zone save(Zone zone);
 
     Zone updateZoneName(String zoneId, String newName);
+
+    boolean existsById(String zoneId);
+
+    boolean existsApartmentsForZone(String zoneId);
+
+    void deleteById(String zoneId);
 }
