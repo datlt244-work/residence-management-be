@@ -30,6 +30,7 @@ public class ApartmentController {
     private final ListApartmentsHandler listApartmentsHandler;
 
     @GetMapping("/apartments")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
     @Operation(
             summary = "List apartments",
             description =
