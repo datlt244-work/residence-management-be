@@ -42,6 +42,22 @@ public class ApartmentTypeManagementRepositoryImpl implements ApartmentTypeManag
         return toDomain(saved);
     }
 
+    @Override
+    public ApartmentType updateApartmentTypeName(final String apartmentTypeId, final String newName) {
+        final int pk = parseApartmentTypeId(apartmentTypeId);
+        ApartmentTypeEntity entity = jpaApartmentTypeRepository
+                .findById(pk)
+                .orElseThrow(() -> new IllegalArgumentException("Apartment type not found: " + apartmentTypeId));
+        final int zoneId = entity.getZone().getId();
+        if (jpaApartmentTypeRepository.existsByZone_IdAndNameAndIdNot(zoneId, newName, pk)) {
+            throw new IllegalArgumentException(
+                    "Apartment type with this name already exists for this zone: " + newName);
+        }
+        entity.setName(newName);
+        ApartmentTypeEntity saved = jpaApartmentTypeRepository.save(entity);
+        return toDomain(saved);
+    }
+
     private static ApartmentType toDomain(final ApartmentTypeEntity e) {
         ApartmentType t = new ApartmentType();
         t.setId(String.valueOf(e.getId()));
@@ -57,6 +73,14 @@ public class ApartmentTypeManagementRepositoryImpl implements ApartmentTypeManag
             return Integer.parseInt(id.strip());
         } catch (NumberFormatException ex) {
             throw new IllegalArgumentException("Invalid zone id: " + id);
+        }
+    }
+
+    private static int parseApartmentTypeId(final String id) {
+        try {
+            return Integer.parseInt(id.strip());
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Invalid apartment type id: " + id);
         }
     }
 }
