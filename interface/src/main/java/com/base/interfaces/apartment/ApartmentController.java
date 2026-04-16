@@ -1,7 +1,10 @@
 package com.base.interfaces.apartment;
 
 import com.base.app.apartment.dto.ApartmentListItemDto;
+import com.base.app.apartment.dto.MoveApartmentsResultDto;
 import com.base.app.apartment.handler.ListApartmentsHandler;
+import com.base.app.apartment.handler.MoveApartmentsHandler;
+import com.base.interfaces.apartment.request.MoveApartmentsRequest;
 import com.base.domain.shared.PageResult;
 import com.base.interfaces.shared.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,10 +16,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
@@ -29,6 +35,7 @@ import jakarta.validation.constraints.Min;
 public class ApartmentController {
 
     private final ListApartmentsHandler listApartmentsHandler;
+    private final MoveApartmentsHandler moveApartmentsHandler;
 
     @GetMapping("/apartments")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
@@ -53,5 +60,19 @@ public class ApartmentController {
         PageResult<ApartmentListItemDto> data =
                 listApartmentsHandler.handle(page, size, projectId, zoneId, apartmentTypeId, search);
         return ResponseEntity.ok(CommonResponse.success(data));
+    }
+
+    @PostMapping("/apartments/move")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(
+            summary = "Move apartments to another zone / apartment type",
+            description =
+                    "Updates selected apartments to the target zone and apartment type. "
+                            + "Target apartment type must belong to the target zone; project is set from that zone. "
+                            + "Soft-deleted apartments cannot be moved.")
+    public ResponseEntity<CommonResponse<MoveApartmentsResultDto>> moveApartments(
+            @Valid @RequestBody final MoveApartmentsRequest request) {
+        MoveApartmentsResultDto result = moveApartmentsHandler.handle(request.toCommand());
+        return ResponseEntity.ok(CommonResponse.success("Apartments moved successfully", result));
     }
 }
