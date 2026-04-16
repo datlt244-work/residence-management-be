@@ -4,6 +4,7 @@ import com.base.domain.zone.domain.Zone;
 import com.base.domain.zone.repository.ZoneManagementRepository;
 import com.base.infra.residence.entity.ProjectEntity;
 import com.base.infra.residence.entity.ZoneEntity;
+import com.base.infra.residence.repository.JpaApartmentRepository;
 import com.base.infra.residence.repository.JpaProjectRepository;
 import com.base.infra.residence.repository.JpaZoneRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ public class ZoneManagementRepositoryImpl implements ZoneManagementRepository {
 
     private final JpaZoneRepository jpaZoneRepository;
     private final JpaProjectRepository jpaProjectRepository;
+    private final JpaApartmentRepository jpaApartmentRepository;
 
     @Override
     public boolean existsByProjectIdAndCode(final String projectId, final String code) {
@@ -46,6 +48,25 @@ public class ZoneManagementRepositoryImpl implements ZoneManagementRepository {
         entity.setName(newName);
         ZoneEntity saved = jpaZoneRepository.save(entity);
         return toDomain(saved);
+    }
+
+    @Override
+    public boolean existsById(final String zoneId) {
+        return jpaZoneRepository.existsById(parseZoneId(zoneId));
+    }
+
+    @Override
+    public boolean existsApartmentsForZone(final String zoneId) {
+        return jpaApartmentRepository.existsByZone_Id(parseZoneId(zoneId));
+    }
+
+    @Override
+    public void deleteById(final String zoneId) {
+        final int pk = parseZoneId(zoneId);
+        if (!jpaZoneRepository.existsById(pk)) {
+            throw new IllegalArgumentException("Zone not found: " + zoneId);
+        }
+        jpaZoneRepository.deleteById(pk);
     }
 
     private static Zone toDomain(final ZoneEntity e) {

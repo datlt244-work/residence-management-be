@@ -2,6 +2,7 @@ package com.base.interfaces.zone;
 
 import com.base.app.zone.handler.CreateZoneCommand;
 import com.base.app.zone.handler.CreateZoneHandler;
+import com.base.app.zone.handler.DeleteZoneHandler;
 import com.base.app.zone.handler.UpdateZoneCommand;
 import com.base.app.zone.handler.UpdateZoneHandler;
 import com.base.domain.zone.domain.Zone;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -32,6 +34,7 @@ public class ZoneManagementController {
 
     private final CreateZoneHandler createZoneHandler;
     private final UpdateZoneHandler updateZoneHandler;
+    private final DeleteZoneHandler deleteZoneHandler;
 
     @PostMapping("/zones-management")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
@@ -51,5 +54,17 @@ public class ZoneManagementController {
             @Valid @RequestBody final UpdateZoneCommand command) {
         Zone updated = updateZoneHandler.handle(id, command);
         return ResponseEntity.ok(CommonResponse.success("Zone updated successfully", updated));
+    }
+
+    @DeleteMapping("/zones-management/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(
+            summary = "Delete zone (phân khu)",
+            description =
+                    "Hard delete when no apartments reference this zone. Apartment types under the zone cascade from DB.")
+    public ResponseEntity<CommonResponse<Void>> deleteZone(
+            @Parameter(description = "Zone id") @PathVariable final String id) {
+        deleteZoneHandler.handle(id);
+        return ResponseEntity.ok(CommonResponse.success("Zone deleted successfully", null));
     }
 }
