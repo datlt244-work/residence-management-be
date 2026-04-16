@@ -4,6 +4,7 @@ import com.base.domain.apartmenttype.domain.ApartmentType;
 import com.base.domain.apartmenttype.repository.ApartmentTypeManagementRepository;
 import com.base.infra.residence.entity.ApartmentTypeEntity;
 import com.base.infra.residence.entity.ZoneEntity;
+import com.base.infra.residence.repository.JpaApartmentRepository;
 import com.base.infra.residence.repository.JpaApartmentTypeRepository;
 import com.base.infra.residence.repository.JpaZoneRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ public class ApartmentTypeManagementRepositoryImpl implements ApartmentTypeManag
 
     private final JpaApartmentTypeRepository jpaApartmentTypeRepository;
     private final JpaZoneRepository jpaZoneRepository;
+    private final JpaApartmentRepository jpaApartmentRepository;
 
     @Override
     public boolean existsByZoneIdAndName(final String zoneId, final String name) {
@@ -56,6 +58,25 @@ public class ApartmentTypeManagementRepositoryImpl implements ApartmentTypeManag
         entity.setName(newName);
         ApartmentTypeEntity saved = jpaApartmentTypeRepository.save(entity);
         return toDomain(saved);
+    }
+
+    @Override
+    public boolean existsById(final String apartmentTypeId) {
+        return jpaApartmentTypeRepository.existsById(parseApartmentTypeId(apartmentTypeId));
+    }
+
+    @Override
+    public boolean existsApartmentsForApartmentType(final String apartmentTypeId) {
+        return jpaApartmentRepository.existsByApartmentType_Id(parseApartmentTypeId(apartmentTypeId));
+    }
+
+    @Override
+    public void deleteById(final String apartmentTypeId) {
+        final int pk = parseApartmentTypeId(apartmentTypeId);
+        if (!jpaApartmentTypeRepository.existsById(pk)) {
+            throw new IllegalArgumentException("Apartment type not found: " + apartmentTypeId);
+        }
+        jpaApartmentTypeRepository.deleteById(pk);
     }
 
     private static ApartmentType toDomain(final ApartmentTypeEntity e) {

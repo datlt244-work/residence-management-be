@@ -8,4 +8,6 @@ public interface JpaApartmentRepository extends JpaRepository<ApartmentEntity, L
     boolean existsByProject_Id(Integer projectId);
 
     boolean existsByZone_Id(Integer zoneId);
+
+    boolean existsByApartmentType_Id(Integer apartmentTypeId);
 }
