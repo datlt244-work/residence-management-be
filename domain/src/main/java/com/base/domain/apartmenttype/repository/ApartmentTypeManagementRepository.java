@@ -11,4 +11,10 @@ public interface ApartmentTypeManagementRepository {
     ApartmentType save(ApartmentType apartmentType);
 
     ApartmentType updateApartmentTypeName(String apartmentTypeId, String newName);
+
+    boolean existsById(String apartmentTypeId);
+
+    boolean existsApartmentsForApartmentType(String apartmentTypeId);
+
+    void deleteById(String apartmentTypeId);
 }
