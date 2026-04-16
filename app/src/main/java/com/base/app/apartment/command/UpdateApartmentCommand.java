@@ -13,7 +13,7 @@ public record UpdateApartmentCommand(
                 String code,
         @NotNull(message = "Area is required")
                 @DecimalMin(value = "0.0", inclusive = true, message = "Area must be non-negative")
-                @Digits(integer = 8, fraction = 2, message = "Area must have at most 8 integer and 2 fraction digits")
+                @Digits(integer = 6, fraction = 2, message = "Area must have at most 6 integer and 2 fraction digits")
                 BigDecimal area,
         @NotNull(message = "Price is required")
                 @DecimalMin(value = "0.0", inclusive = true, message = "Price must be non-negative")
