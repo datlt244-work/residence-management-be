@@ -17,7 +17,7 @@ public record UpdateApartmentCommand(
                 BigDecimal area,
         @NotNull(message = "Price is required")
                 @DecimalMin(value = "0.0", inclusive = true, message = "Price must be non-negative")
-                @Digits(integer = 15, fraction = 2, message = "Price must have at most 15 integer and 2 fraction digits")
+                @Digits(integer = 13, fraction = 2, message = "Price must have at most 13 integer and 2 fraction digits")
                 BigDecimal price,
         @DecimalMin(value = "0.0", inclusive = true, message = "Tax fee must be non-negative")
                 @Digits(integer = 15, fraction = 2, message = "Tax fee must have at most 15 integer and 2 fraction digits")
