@@ -4,7 +4,12 @@ import com.base.domain.apartment.domain.Apartment;
 import com.base.domain.apartment.repository.ApartmentRepository;
 import com.base.domain.shared.PageResult;
 import com.base.infra.residence.entity.ApartmentEntity;
+import com.base.infra.residence.entity.ApartmentTypeEntity;
+import com.base.infra.residence.entity.ProjectEntity;
+import com.base.infra.residence.entity.ZoneEntity;
 import com.base.infra.residence.repository.JpaApartmentRepository;
+import com.base.infra.residence.repository.JpaApartmentTypeRepository;
+import com.base.infra.residence.repository.JpaZoneRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 @Repository
 @RequiredArgsConstructor
@@ -23,6 +29,8 @@ public class ApartmentRepositoryImpl implements ApartmentRepository {
     private static final int MAX_SIZE = 100;
 
     private final JpaApartmentRepository jpaApartmentRepository;
+    private final JpaZoneRepository jpaZoneRepository;
+    private final JpaApartmentTypeRepository jpaApartmentTypeRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -65,6 +73,45 @@ public class ApartmentRepositoryImpl implements ApartmentRepository {
                 pageResult.getTotalPages());
     }
 
+    @Override
+    public int moveApartmentsToZoneAndType(
+            final List<String> apartmentIds, final String targetZoneId, final String targetApartmentTypeId) {
+        final int zonePk = parseZoneId(targetZoneId);
+        final int typePk = parseApartmentTypeId(targetApartmentTypeId);
+
+        ZoneEntity zone =
+                jpaZoneRepository.findById(zonePk).orElseThrow(() -> new IllegalArgumentException("Zone not found: " + targetZoneId));
+        ApartmentTypeEntity apartmentType = jpaApartmentTypeRepository
+                .findById(typePk)
+                .orElseThrow(() -> new IllegalArgumentException("Apartment type not found: " + targetApartmentTypeId));
+
+        if (!Objects.equals(apartmentType.getZone().getId(), zone.getId())) {
+            throw new IllegalArgumentException("Apartment type does not belong to the target zone");
+        }
+
+        ProjectEntity project = zone.getProject();
+
+        int moved = 0;
+        for (String rawId : apartmentIds) {
+            if (rawId == null || rawId.isBlank()) {
+                continue;
+            }
+            final long apartmentPk = parseApartmentId(rawId);
+            ApartmentEntity entity = jpaApartmentRepository
+                    .findById(apartmentPk)
+                    .orElseThrow(() -> new IllegalArgumentException("Apartment not found: " + rawId.strip()));
+            if (entity.getDeletedAt() != null) {
+                throw new IllegalArgumentException("Cannot move deleted apartment: " + rawId.strip());
+            }
+            entity.setProject(project);
+            entity.setZone(zone);
+            entity.setApartmentType(apartmentType);
+            jpaApartmentRepository.save(entity);
+            moved++;
+        }
+        return moved;
+    }
+
     private static Apartment toDomain(final ApartmentEntity apartmentEntity) {
         Apartment apartment = new Apartment();
         apartment.setId(String.valueOf(apartmentEntity.getId()));
@@ -92,5 +139,29 @@ public class ApartmentRepositoryImpl implements ApartmentRepository {
 
     private static String escapeLikePattern(final String raw) {
         return raw.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    }
+
+    private static int parseZoneId(final String id) {
+        try {
+            return Integer.parseInt(id.strip());
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Invalid zone id: " + id);
+        }
+    }
+
+    private static int parseApartmentTypeId(final String id) {
+        try {
+            return Integer.parseInt(id.strip());
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Invalid apartment type id: " + id);
+        }
+    }
+
+    private static long parseApartmentId(final String id) {
+        try {
+            return Long.parseLong(id.strip());
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Invalid apartment id: " + id);
+        }
     }
 }
