@@ -44,7 +44,11 @@ public class ListApartmentsHandler {
             return null;
         }
         try {
-            return Integer.parseInt(raw.strip());
+            int value = Integer.parseInt(raw.strip());
+            if (value <= 0) {
+                throw new IllegalArgumentException("Invalid " + field + ": must be positive, got " + raw);
+            }
+            return value;
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid " + field + ": " + raw);
         }
