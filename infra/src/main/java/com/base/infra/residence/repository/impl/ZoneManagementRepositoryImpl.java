@@ -37,6 +37,17 @@ public class ZoneManagementRepositoryImpl implements ZoneManagementRepository {
         return toDomain(saved);
     }
 
+    @Override
+    public Zone updateZoneName(final String zoneId, final String newName) {
+        final int pk = parseZoneId(zoneId);
+        ZoneEntity entity = jpaZoneRepository
+                .findById(pk)
+                .orElseThrow(() -> new IllegalArgumentException("Zone not found: " + zoneId));
+        entity.setName(newName);
+        ZoneEntity saved = jpaZoneRepository.save(entity);
+        return toDomain(saved);
+    }
+
     private static Zone toDomain(final ZoneEntity e) {
         Zone z = new Zone();
         z.setId(String.valueOf(e.getId()));
@@ -52,6 +63,14 @@ public class ZoneManagementRepositoryImpl implements ZoneManagementRepository {
             return Integer.parseInt(id.strip());
         } catch (NumberFormatException ex) {
             throw new IllegalArgumentException("Invalid project id: " + id);
+        }
+    }
+
+    private static int parseZoneId(final String id) {
+        try {
+            return Integer.parseInt(id.strip());
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Invalid zone id: " + id);
         }
     }
 }
