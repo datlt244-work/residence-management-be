@@ -1,6 +1,7 @@
 package com.base.infra.residence.repository.impl;
 
 import com.base.domain.apartment.domain.Apartment;
+import com.base.domain.apartment.domain.ApartmentOwnerInfo;
 import com.base.domain.apartment.domain.ApartmentUpdate;
 import com.base.domain.apartment.repository.ApartmentRepository;
 import com.base.domain.shared.PageResult;
@@ -146,6 +147,20 @@ public class ApartmentRepositoryImpl implements ApartmentRepository {
 
         jpaApartmentRepository.save(entity);
         return toDomain(entity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ApartmentOwnerInfo getApartmentOwnerInfo(final String apartmentId) {
+        final String id = apartmentId.strip();
+        final long pk = parseLongId(id, "apartment");
+        ApartmentEntity entity = jpaApartmentRepository
+                .findById(pk)
+                .orElseThrow(() -> new IllegalArgumentException("Apartment not found: " + id));
+        if (entity.getDeletedAt() != null) {
+            throw new IllegalArgumentException("Apartment not found: " + id);
+        }
+        return new ApartmentOwnerInfo(entity.getOwnerPhone(), entity.getSource());
     }
 
     private static Apartment toDomain(final ApartmentEntity apartmentEntity) {

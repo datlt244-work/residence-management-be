@@ -2,8 +2,10 @@ package com.base.interfaces.apartment;
 
 import com.base.app.apartment.dto.ApartmentAdminDto;
 import com.base.app.apartment.dto.ApartmentListItemDto;
+import com.base.app.apartment.dto.ApartmentOwnerInfoDto;
 import com.base.app.apartment.dto.MoveApartmentsResultDto;
 import com.base.app.apartment.command.UpdateApartmentCommand;
+import com.base.app.apartment.handler.GetApartmentOwnerInfoHandler;
 import com.base.app.apartment.handler.ListApartmentsHandler;
 import com.base.app.apartment.handler.MoveApartmentsHandler;
 import com.base.app.apartment.handler.UpdateApartmentHandler;
@@ -42,6 +44,7 @@ public class ApartmentController {
     private final ListApartmentsHandler listApartmentsHandler;
     private final MoveApartmentsHandler moveApartmentsHandler;
     private final UpdateApartmentHandler updateApartmentHandler;
+    private final GetApartmentOwnerInfoHandler getApartmentOwnerInfoHandler;
 
     @GetMapping("/apartments")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
@@ -66,6 +69,17 @@ public class ApartmentController {
         PageResult<ApartmentListItemDto> data =
                 listApartmentsHandler.handle(page, size, projectId, zoneId, apartmentTypeId, search);
         return ResponseEntity.ok(CommonResponse.success(data));
+    }
+
+    @GetMapping("/apartments/{id}/owner-info")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(
+            summary = "Get owner phone and source (sensitive)",
+            description = "Returns owner phone and listing source only. ADMIN and MANAGER only.")
+    public ResponseEntity<CommonResponse<ApartmentOwnerInfoDto>> getApartmentOwnerInfo(
+            @Parameter(description = "Apartment id") @PathVariable final String id) {
+        ApartmentOwnerInfoDto dto = getApartmentOwnerInfoHandler.handle(id);
+        return ResponseEntity.ok(CommonResponse.success(dto));
     }
 
     @PutMapping("/apartments/{id}")
