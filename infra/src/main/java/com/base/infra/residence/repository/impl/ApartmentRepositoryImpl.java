@@ -1,6 +1,7 @@
 package com.base.infra.residence.repository.impl;
 
 import com.base.domain.apartment.domain.Apartment;
+import com.base.domain.apartment.domain.ApartmentUpdate;
 import com.base.domain.apartment.repository.ApartmentRepository;
 import com.base.domain.shared.PageResult;
 import com.base.infra.residence.entity.ApartmentEntity;
@@ -16,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -113,6 +115,39 @@ public class ApartmentRepositoryImpl implements ApartmentRepository {
         return moved;
     }
 
+    @Override
+    public Apartment updateApartment(final String apartmentId, final ApartmentUpdate update) {
+        final String id = apartmentId.strip();
+        final long pk = parseLongId(id, "apartment");
+        ApartmentEntity entity = jpaApartmentRepository
+                .findById(pk)
+                .orElseThrow(() -> new IllegalArgumentException("Apartment not found: " + id));
+        if (entity.getDeletedAt() != null) {
+            throw new IllegalArgumentException("Cannot update deleted apartment: " + id);
+        }
+
+        final String newCode = update.code().strip();
+        if (!Objects.equals(newCode, entity.getCode()) && jpaApartmentRepository.existsByCodeAndIdIsNot(newCode, pk)) {
+            throw new IllegalArgumentException("Apartment code already exists: " + newCode);
+        }
+
+        entity.setCode(newCode);
+        entity.setArea(update.area());
+        entity.setPrice(update.price());
+        entity.setTaxFee(update.taxFee() != null ? update.taxFee() : BigDecimal.ZERO);
+        entity.setFurnitureStatus(update.furnitureStatus());
+        entity.setLegalStatus(update.legalStatus());
+        entity.setBalconyDirection(update.balconyDirection());
+        entity.setNote(update.note());
+        entity.setOwnerPhone(update.ownerPhone());
+        entity.setOwnerContact(update.ownerContact());
+        entity.setSource(update.source());
+        entity.setStatus(update.status().strip());
+
+        jpaApartmentRepository.save(entity);
+        return toDomain(entity);
+    }
+
     private static Apartment toDomain(final ApartmentEntity apartmentEntity) {
         Apartment apartment = new Apartment();
         apartment.setId(String.valueOf(apartmentEntity.getId()));
@@ -132,6 +167,10 @@ public class ApartmentRepositoryImpl implements ApartmentRepository {
         apartment.setFurnitureStatus(apartmentEntity.getFurnitureStatus());
         apartment.setLegalStatus(apartmentEntity.getLegalStatus());
         apartment.setBalconyDirection(apartmentEntity.getBalconyDirection());
+        apartment.setNote(apartmentEntity.getNote());
+        apartment.setOwnerPhone(apartmentEntity.getOwnerPhone());
+        apartment.setOwnerContact(apartmentEntity.getOwnerContact());
+        apartment.setSource(apartmentEntity.getSource());
         apartment.setStatus(apartmentEntity.getStatus());
         apartment.setCreatedAt(apartmentEntity.getCreatedAt());
         apartment.setUpdatedAt(apartmentEntity.getUpdatedAt());

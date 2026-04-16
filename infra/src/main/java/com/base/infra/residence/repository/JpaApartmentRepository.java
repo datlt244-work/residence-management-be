@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface JpaApartmentRepository extends JpaRepository<ApartmentEntity, Long> {
 
+    boolean existsByCodeAndIdIsNot(String code, Long id);
+
     boolean existsByProject_Id(Integer projectId);
 
     boolean existsByZone_Id(Integer zoneId);

@@ -29,6 +29,10 @@ public class Apartment extends BaseDomain {
     private String furnitureStatus;
     private String legalStatus;
     private String balconyDirection;
+    private String note;
+    private String ownerPhone;
+    private String ownerContact;
+    private String source;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -1,9 +1,12 @@
 package com.base.interfaces.apartment;
 
+import com.base.app.apartment.dto.ApartmentAdminDto;
 import com.base.app.apartment.dto.ApartmentListItemDto;
 import com.base.app.apartment.dto.MoveApartmentsResultDto;
+import com.base.app.apartment.command.UpdateApartmentCommand;
 import com.base.app.apartment.handler.ListApartmentsHandler;
 import com.base.app.apartment.handler.MoveApartmentsHandler;
+import com.base.app.apartment.handler.UpdateApartmentHandler;
 import com.base.interfaces.apartment.request.MoveApartmentsRequest;
 import com.base.domain.shared.PageResult;
 import com.base.interfaces.shared.response.CommonResponse;
@@ -16,7 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -36,6 +41,7 @@ public class ApartmentController {
 
     private final ListApartmentsHandler listApartmentsHandler;
     private final MoveApartmentsHandler moveApartmentsHandler;
+    private final UpdateApartmentHandler updateApartmentHandler;
 
     @GetMapping("/apartments")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
@@ -60,6 +66,21 @@ public class ApartmentController {
         PageResult<ApartmentListItemDto> data =
                 listApartmentsHandler.handle(page, size, projectId, zoneId, apartmentTypeId, search);
         return ResponseEntity.ok(CommonResponse.success(data));
+    }
+
+    @PutMapping("/apartments/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(
+            summary = "Update apartment details",
+            description =
+                    "Updates code, pricing, attributes, note, owner contact, source, and status. "
+                            + "Does not change project / zone / apartment type (use POST /api/apartments/move). "
+                            + "Apartment code must remain unique. Soft-deleted apartments cannot be updated.")
+    public ResponseEntity<CommonResponse<ApartmentAdminDto>> updateApartment(
+            @Parameter(description = "Apartment id") @PathVariable final String id,
+            @Valid @RequestBody final UpdateApartmentCommand command) {
+        ApartmentAdminDto dto = updateApartmentHandler.handle(id, command);
+        return ResponseEntity.ok(CommonResponse.success("Apartment updated successfully", dto));
     }
 
     @PostMapping("/apartments/move")
