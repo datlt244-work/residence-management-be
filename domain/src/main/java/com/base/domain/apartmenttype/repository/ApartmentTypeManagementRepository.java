@@ -9,4 +9,6 @@ public interface ApartmentTypeManagementRepository {
     boolean existsByZoneIdAndCode(String zoneId, String code);
 
     ApartmentType save(ApartmentType apartmentType);
+
+    ApartmentType updateApartmentTypeName(String apartmentTypeId, String newName);
 }
