@@ -24,6 +24,9 @@ public interface ApartmentRepository {
 
     ApartmentOwnerInfo getApartmentOwnerInfo(String apartmentId);
 
+    /** Full apartment row for detail form; throws if missing or soft-deleted. */
+    Apartment findApartmentById(String apartmentId);
+
     int bulkSoftDeleteApartments(List<String> apartmentIds);
 
     Apartment updateApartmentStatus(String apartmentId, String status);
