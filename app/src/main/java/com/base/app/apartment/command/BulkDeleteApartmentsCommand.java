@@ -18,9 +18,9 @@ public record BulkDeleteApartmentsCommand(
         if (apartmentIds != null) {
             List<String> normalized = new ArrayList<>(apartmentIds.size());
             for (String id : apartmentIds) {
-                normalized.add(id != null ? id.strip() : null);
+                normalized.add(id != null ? id.strip() : id);
             }
-            apartmentIds = List.copyOf(normalized);
+            apartmentIds = normalized.stream().allMatch(Objects::nonNull) ? List.copyOf(normalized) : List.of();
         }
     }
 }
