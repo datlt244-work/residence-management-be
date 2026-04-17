@@ -19,6 +19,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -161,6 +162,29 @@ public class ApartmentRepositoryImpl implements ApartmentRepository {
             throw new IllegalArgumentException("Apartment not found: " + id);
         }
         return new ApartmentOwnerInfo(entity.getOwnerPhone(), entity.getSource());
+    }
+
+    @Override
+    public int bulkSoftDeleteApartments(final List<String> apartmentIds) {
+        final LocalDateTime now = LocalDateTime.now();
+        int deleted = 0;
+        for (String rawId : apartmentIds) {
+            if (rawId == null || rawId.isBlank()) {
+                continue;
+            }
+            final String id = rawId.strip();
+            final long pk = parseLongId(id, "apartment");
+            ApartmentEntity entity = jpaApartmentRepository
+                    .findById(pk)
+                    .orElseThrow(() -> new IllegalArgumentException("Apartment not found: " + id));
+            if (entity.getDeletedAt() != null) {
+                throw new IllegalArgumentException("Apartment already deleted: " + id);
+            }
+            entity.setDeletedAt(now);
+            jpaApartmentRepository.save(entity);
+            deleted++;
+        }
+        return deleted;
     }
 
     private static Apartment toDomain(final ApartmentEntity apartmentEntity) {
