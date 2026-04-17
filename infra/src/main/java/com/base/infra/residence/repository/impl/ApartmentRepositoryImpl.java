@@ -165,6 +165,20 @@ public class ApartmentRepositoryImpl implements ApartmentRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Apartment findApartmentById(final String apartmentId) {
+        final String id = apartmentId.strip();
+        final long pk = parseLongId(id, "apartment");
+        ApartmentEntity entity = jpaApartmentRepository
+                .findById(pk)
+                .orElseThrow(() -> new IllegalArgumentException("Apartment not found: " + id));
+        if (entity.getDeletedAt() != null) {
+            throw new IllegalArgumentException("Apartment not found: " + id);
+        }
+        return toDomain(entity);
+    }
+
+    @Override
     public int bulkSoftDeleteApartments(final List<String> apartmentIds) {
         final LocalDateTime now = LocalDateTime.now();
         int deleted = 0;

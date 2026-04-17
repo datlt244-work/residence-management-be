@@ -1,6 +1,7 @@
 package com.base.app.apartment.dto;
 
 import com.base.domain.apartment.domain.Apartment;
+import com.base.domain.employee.domain.EmployeeRole;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -57,5 +58,37 @@ public record ApartmentAdminDto(
                 apartment.getStatus(),
                 apartment.getCreatedAt(),
                 apartment.getUpdatedAt());
+    }
+
+    public static ApartmentAdminDto fromDomainForViewer(final Apartment apartment, final EmployeeRole viewerRole) {
+        final ApartmentAdminDto full = fromDomain(apartment);
+        if (viewerRole != EmployeeRole.STAFF) {
+            return full;
+        }
+        return new ApartmentAdminDto(
+                full.id(),
+                full.projectId(),
+                full.projectCode(),
+                full.projectName(),
+                full.zoneId(),
+                full.zoneCode(),
+                full.zoneName(),
+                full.apartmentTypeId(),
+                full.apartmentTypeCode(),
+                full.apartmentTypeName(),
+                full.code(),
+                full.area(),
+                full.price(),
+                full.taxFee(),
+                full.furnitureStatus(),
+                full.legalStatus(),
+                full.balconyDirection(),
+                full.note(),
+                null,
+                null,
+                null,
+                full.status(),
+                full.createdAt(),
+                full.updatedAt());
     }
 }

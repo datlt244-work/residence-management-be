@@ -9,6 +9,7 @@ import com.base.app.apartment.command.BulkDeleteApartmentsCommand;
 import com.base.app.apartment.command.UpdateApartmentCommand;
 import com.base.app.apartment.command.UpdateApartmentStatusCommand;
 import com.base.app.apartment.handler.BulkDeleteApartmentsHandler;
+import com.base.app.apartment.handler.GetApartmentDetailHandler;
 import com.base.app.apartment.handler.GetApartmentOwnerInfoHandler;
 import com.base.app.apartment.handler.ListApartmentsHandler;
 import com.base.app.apartment.handler.MoveApartmentsHandler;
@@ -54,6 +55,7 @@ public class ApartmentController {
     private final GetApartmentOwnerInfoHandler getApartmentOwnerInfoHandler;
     private final BulkDeleteApartmentsHandler bulkDeleteApartmentsHandler;
     private final UpdateApartmentStatusHandler updateApartmentStatusHandler;
+    private final GetApartmentDetailHandler getApartmentDetailHandler;
 
     @GetMapping("/apartments")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
@@ -102,6 +104,19 @@ public class ApartmentController {
     public ResponseEntity<CommonResponse<ApartmentOwnerInfoDto>> getApartmentOwnerInfo(
             @Parameter(description = "Apartment id") @PathVariable final String id) {
         ApartmentOwnerInfoDto dto = getApartmentOwnerInfoHandler.handle(id);
+        return ResponseEntity.ok(CommonResponse.success(dto));
+    }
+
+    @GetMapping("/apartments/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
+    @Operation(
+            summary = "Get apartment detail for forms",
+            description =
+                    "Full non-deleted apartment row. STAFF: ownerPhone, ownerContact, and source are null (masked). "
+                            + "ADMIN and MANAGER receive all fields.")
+    public ResponseEntity<CommonResponse<ApartmentAdminDto>> getApartmentDetail(
+            @Parameter(description = "Apartment id") @PathVariable final String id) {
+        ApartmentAdminDto dto = getApartmentDetailHandler.handle(id);
         return ResponseEntity.ok(CommonResponse.success(dto));
     }
 
