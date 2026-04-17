@@ -23,4 +23,6 @@ public interface ApartmentRepository {
     Apartment updateApartment(String apartmentId, ApartmentUpdate update);
 
     ApartmentOwnerInfo getApartmentOwnerInfo(String apartmentId);
+
+    int bulkSoftDeleteApartments(List<String> apartmentIds);
 }

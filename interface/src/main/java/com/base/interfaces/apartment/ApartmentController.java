@@ -3,8 +3,11 @@ package com.base.interfaces.apartment;
 import com.base.app.apartment.dto.ApartmentAdminDto;
 import com.base.app.apartment.dto.ApartmentListItemDto;
 import com.base.app.apartment.dto.ApartmentOwnerInfoDto;
+import com.base.app.apartment.dto.BulkDeleteApartmentsResultDto;
 import com.base.app.apartment.dto.MoveApartmentsResultDto;
+import com.base.app.apartment.command.BulkDeleteApartmentsCommand;
 import com.base.app.apartment.command.UpdateApartmentCommand;
+import com.base.app.apartment.handler.BulkDeleteApartmentsHandler;
 import com.base.app.apartment.handler.GetApartmentOwnerInfoHandler;
 import com.base.app.apartment.handler.ListApartmentsHandler;
 import com.base.app.apartment.handler.MoveApartmentsHandler;
@@ -20,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,6 +49,7 @@ public class ApartmentController {
     private final MoveApartmentsHandler moveApartmentsHandler;
     private final UpdateApartmentHandler updateApartmentHandler;
     private final GetApartmentOwnerInfoHandler getApartmentOwnerInfoHandler;
+    private final BulkDeleteApartmentsHandler bulkDeleteApartmentsHandler;
 
     @GetMapping("/apartments")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
@@ -109,5 +114,20 @@ public class ApartmentController {
             @Valid @RequestBody final MoveApartmentsRequest request) {
         MoveApartmentsResultDto result = moveApartmentsHandler.handle(request.toCommand());
         return ResponseEntity.ok(CommonResponse.success("Apartments moved successfully", result));
+    }
+
+    @DeleteMapping("/apartments/bulk-delete")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(
+            summary = "Bulk soft-delete apartments",
+            description =
+                    "Sets deletedAt on each selected apartment (soft delete). "
+                    + "Request body: {\"apartmentIds\":[\"1\",\"2\"]}. "
+                    + "Fails if any id is missing or already deleted. Max 500 ids per call. "
+                    + "Some HTTP clients omit DELETE bodies; use a client that sends JSON.")
+    public ResponseEntity<CommonResponse<BulkDeleteApartmentsResultDto>> bulkDeleteApartments(
+            @Valid @RequestBody final BulkDeleteApartmentsCommand command) {
+        BulkDeleteApartmentsResultDto result = bulkDeleteApartmentsHandler.handle(command);
+        return ResponseEntity.ok(CommonResponse.success("Apartments deleted successfully", result));
     }
 }
