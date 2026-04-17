@@ -7,11 +7,13 @@ import com.base.app.apartment.dto.BulkDeleteApartmentsResultDto;
 import com.base.app.apartment.dto.MoveApartmentsResultDto;
 import com.base.app.apartment.command.BulkDeleteApartmentsCommand;
 import com.base.app.apartment.command.UpdateApartmentCommand;
+import com.base.app.apartment.command.UpdateApartmentStatusCommand;
 import com.base.app.apartment.handler.BulkDeleteApartmentsHandler;
 import com.base.app.apartment.handler.GetApartmentOwnerInfoHandler;
 import com.base.app.apartment.handler.ListApartmentsHandler;
 import com.base.app.apartment.handler.MoveApartmentsHandler;
 import com.base.app.apartment.handler.UpdateApartmentHandler;
+import com.base.app.apartment.handler.UpdateApartmentStatusHandler;
 import com.base.interfaces.apartment.request.MoveApartmentsRequest;
 import com.base.domain.shared.PageResult;
 import com.base.interfaces.shared.response.CommonResponse;
@@ -25,6 +27,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -50,6 +53,7 @@ public class ApartmentController {
     private final UpdateApartmentHandler updateApartmentHandler;
     private final GetApartmentOwnerInfoHandler getApartmentOwnerInfoHandler;
     private final BulkDeleteApartmentsHandler bulkDeleteApartmentsHandler;
+    private final UpdateApartmentStatusHandler updateApartmentStatusHandler;
 
     @GetMapping("/apartments")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
@@ -74,6 +78,20 @@ public class ApartmentController {
         PageResult<ApartmentListItemDto> data =
                 listApartmentsHandler.handle(page, size, projectId, zoneId, apartmentTypeId, search);
         return ResponseEntity.ok(CommonResponse.success(data));
+    }
+
+    @PatchMapping("/apartments/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
+    @Operation(
+            summary = "Quick-update apartment status",
+            description =
+                    "Updates status only (e.g. switch to \"Đã cọc\"). "
+                            + "Authenticated ADMIN, MANAGER, or STAFF. Soft-deleted apartments cannot be updated.")
+    public ResponseEntity<CommonResponse<ApartmentListItemDto>> patchApartmentStatus(
+            @Parameter(description = "Apartment id") @PathVariable final String id,
+            @Valid @RequestBody final UpdateApartmentStatusCommand command) {
+        ApartmentListItemDto dto = updateApartmentStatusHandler.handle(id, command);
+        return ResponseEntity.ok(CommonResponse.success("Apartment status updated successfully", dto));
     }
 
     @GetMapping("/apartments/{id}/owner-info")
