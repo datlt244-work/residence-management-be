@@ -187,6 +187,21 @@ public class ApartmentRepositoryImpl implements ApartmentRepository {
         return deleted;
     }
 
+    @Override
+    public Apartment updateApartmentStatus(final String apartmentId, final String status) {
+        final String id = apartmentId.strip();
+        final long pk = parseLongId(id, "apartment");
+        ApartmentEntity entity = jpaApartmentRepository
+                .findById(pk)
+                .orElseThrow(() -> new IllegalArgumentException("Apartment not found: " + id));
+        if (entity.getDeletedAt() != null) {
+            throw new IllegalArgumentException("Apartment not found: " + id);
+        }
+        entity.setStatus(status.strip());
+        jpaApartmentRepository.save(entity);
+        return toDomain(entity);
+    }
+
     private static Apartment toDomain(final ApartmentEntity apartmentEntity) {
         Apartment apartment = new Apartment();
         apartment.setId(String.valueOf(apartmentEntity.getId()));
