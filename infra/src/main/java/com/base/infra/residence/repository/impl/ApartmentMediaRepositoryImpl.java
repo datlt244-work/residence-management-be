@@ -11,7 +11,10 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -73,6 +76,66 @@ public class ApartmentMediaRepositoryImpl implements ApartmentMediaRepository {
         return toDomain(entity);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ApartmentMedia> findActiveMediaById(final String mediaId) {
+        final long pk = parseMediaPk(mediaId.strip());
+        return jpaApartmentMediaRepository.findActiveById(pk).map(ApartmentMediaRepositoryImpl::toDomain);
+    }
+
+    @Override
+    @Transactional
+    public void deleteMediaById(final String mediaId) {
+        final long pk = parseMediaPk(mediaId.strip());
+        jpaApartmentMediaRepository.deleteById(pk);
+        jpaApartmentMediaRepository.flush();
+    }
+
+    @Override
+    @Transactional
+    public ApartmentMedia setPrimaryMediaById(final String mediaId) {
+        final long pk = parseMediaPk(mediaId.strip());
+        final ApartmentMediaEntity entity =
+                jpaApartmentMediaRepository
+                        .findActiveById(pk)
+                        .orElseThrow(() -> new IllegalArgumentException("Media not found: " + mediaId.strip()));
+        final long apartmentPk = entity.getApartment().getId();
+        jpaApartmentMediaRepository.clearPrimaryForApartment(apartmentPk);
+        entity.setPrimary(true);
+        jpaApartmentMediaRepository.save(entity);
+        return toDomain(entity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, String> findPrimaryMediaStorageKeyByApartmentIds(final List<String> apartmentIds) {
+        if (apartmentIds == null || apartmentIds.isEmpty()) {
+            return Map.of();
+        }
+        final List<Long> pks = new ArrayList<>(apartmentIds.size());
+        for (String raw : apartmentIds) {
+            if (raw == null || raw.isBlank()) {
+                continue;
+            }
+            pks.add(parseApartmentPk(raw.strip()));
+        }
+        if (pks.isEmpty()) {
+            return Map.of();
+        }
+        final List<Object[]> rows = jpaApartmentMediaRepository.findPrimaryMediaApartmentIdAndUrl(pks);
+        final Map<String, String> out = new HashMap<>();
+        for (final Object[] row : rows) {
+            if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
+                continue;
+            }
+            final String apartmentKey = String.valueOf(row[0]);
+            if (!out.containsKey(apartmentKey)) {
+                out.put(apartmentKey, (String) row[1]);
+            }
+        }
+        return out;
+    }
+
     private static String truncateMediaType(final String mediaType) {
         final String raw = mediaType != null ? mediaType.strip() : "FILE";
         if (raw.length() <= MEDIA_TYPE_MAX) {
@@ -99,6 +162,14 @@ public class ApartmentMediaRepositoryImpl implements ApartmentMediaRepository {
             return Long.parseLong(id);
         } catch (NumberFormatException ex) {
             throw new IllegalArgumentException("Invalid apartment id: " + id);
+        }
+    }
+
+    private static long parseMediaPk(final String id) {
+        try {
+            return Long.parseLong(id);
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Invalid media id: " + id);
         }
     }
 }

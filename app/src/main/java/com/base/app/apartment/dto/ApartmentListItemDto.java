@@ -25,9 +25,15 @@ public record ApartmentListItemDto(
         String balconyDirection,
         String status,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt) {
+        LocalDateTime updatedAt,
+        /** Presigned GET URL for {@code is_primary} media, or null if none. */
+        String primaryMediaUrl) {
 
     public static ApartmentListItemDto fromDomain(final Apartment apartment) {
+        return fromDomain(apartment, null);
+    }
+
+    public static ApartmentListItemDto fromDomain(final Apartment apartment, final String primaryMediaUrl) {
         return new ApartmentListItemDto(
                 apartment.getId(),
                 apartment.getProjectId(),
@@ -48,6 +54,7 @@ public record ApartmentListItemDto(
                 apartment.getBalconyDirection(),
                 apartment.getStatus(),
                 apartment.getCreatedAt(),
-                apartment.getUpdatedAt());
+                apartment.getUpdatedAt(),
+                primaryMediaUrl);
     }
 }
