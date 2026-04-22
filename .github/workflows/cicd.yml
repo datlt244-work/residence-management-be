@@ -110,6 +110,10 @@ jobs:
           MANAGER_SITE: ${{ secrets.MANAGER_SITE }}
           JWT_RSA_PRIVATE_KEY_B64: ${{ secrets.JWT_RSA_PRIVATE_KEY_B64 }}
           JWT_RSA_PUBLIC_KEY_B64: ${{ secrets.JWT_RSA_PUBLIC_KEY_B64 }}
+          MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+          MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+          MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+          MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
         run: |
           set -e
           echo "Deploy IMAGE_TAG=[${IMAGE_TAG}]"
@@ -153,6 +157,11 @@ jobs:
               -e ADMIN_SITE='${ADMIN_SITE}' \
               -e MANAGER_SITE='${MANAGER_SITE}' \
               -v '${KEYS_DIR}:/app/keys:ro' \
+              -e MINIO_ENDPOINT='${MINIO_ENDPOINT}' \
+              -e MINIO_ACCESS_KEY='${MINIO_ACCESS_KEY}' \
+              -e MINIO_SECRET_KEY='${MINIO_SECRET_KEY}' \
+              -e MINIO_BUCKET='${MINIO_BUCKET}' \
+              -e MINIO_ENABLED=true \
               '${IMAGE_TAG}'
             for i in \$(seq 1 30); do
               if curl -fsS 'http://localhost:8080/actuator/health' | grep -q '\"status\":\"UP\"'; then
