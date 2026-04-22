@@ -51,6 +51,8 @@ public class ApartmentMediaRepositoryImpl implements ApartmentMediaRepository {
         }
         if (primary) {
             jpaApartmentMediaRepository.clearPrimaryForApartment(pk);
+            apartment = jpaApartmentRepository.findById(pk).orElseThrow(() -> new IllegalArgumentException("Apartment not found: " + apartmentId));
+        }
         }
         final int order;
         if (displayOrder != null) {
