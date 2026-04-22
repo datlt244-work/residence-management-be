@@ -2,6 +2,7 @@ package com.base.interfaces.apartment;
 
 import com.base.app.apartment.dto.ApartmentAdminDto;
 import com.base.app.apartment.dto.ApartmentListItemDto;
+import com.base.app.apartment.dto.ApartmentMediaItemDto;
 import com.base.app.apartment.dto.ApartmentOwnerInfoDto;
 import com.base.app.apartment.dto.BulkDeleteApartmentsResultDto;
 import com.base.app.apartment.dto.MoveApartmentsResultDto;
@@ -11,6 +12,7 @@ import com.base.app.apartment.command.UpdateApartmentStatusCommand;
 import com.base.app.apartment.handler.BulkDeleteApartmentsHandler;
 import com.base.app.apartment.handler.GetApartmentDetailHandler;
 import com.base.app.apartment.handler.GetApartmentOwnerInfoHandler;
+import com.base.app.apartment.handler.ListApartmentMediaHandler;
 import com.base.app.apartment.handler.ListApartmentsHandler;
 import com.base.app.apartment.handler.MoveApartmentsHandler;
 import com.base.app.apartment.handler.UpdateApartmentHandler;
@@ -41,6 +43,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -56,6 +60,7 @@ public class ApartmentController {
     private final BulkDeleteApartmentsHandler bulkDeleteApartmentsHandler;
     private final UpdateApartmentStatusHandler updateApartmentStatusHandler;
     private final GetApartmentDetailHandler getApartmentDetailHandler;
+    private final ListApartmentMediaHandler listApartmentMediaHandler;
 
     @GetMapping("/apartments")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
@@ -105,6 +110,19 @@ public class ApartmentController {
             @Parameter(description = "Apartment id") @PathVariable final String id) {
         ApartmentOwnerInfoDto dto = getApartmentOwnerInfoHandler.handle(id);
         return ResponseEntity.ok(CommonResponse.success(dto));
+    }
+
+    @GetMapping("/apartments/{id}/media")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
+    @Operation(
+            summary = "List apartment media files",
+            description =
+                    "Returns all image/video/file rows for the apartment (url, type, order, primary flag). "
+                            + "Apartment must exist and not be soft-deleted. Authenticated ADMIN, MANAGER, or STAFF.")
+    public ResponseEntity<CommonResponse<List<ApartmentMediaItemDto>>> listApartmentMedia(
+            @Parameter(description = "Apartment id") @PathVariable final String id) {
+        List<ApartmentMediaItemDto> items = listApartmentMediaHandler.handle(id);
+        return ResponseEntity.ok(CommonResponse.success(items));
     }
 
     @GetMapping("/apartments/{id}")
