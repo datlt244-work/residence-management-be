@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface JpaApartmentMediaRepository extends JpaRepository<ApartmentMediaEntity, Long> {
 
@@ -18,6 +19,14 @@ public interface JpaApartmentMediaRepository extends JpaRepository<ApartmentMedi
             ORDER BY m.displayOrder ASC, m.id ASC
             """)
     List<ApartmentMediaEntity> listForActiveApartment(@Param("apartmentId") Long apartmentId);
+
+    @Query(
+            """
+            SELECT m FROM ApartmentMediaEntity m
+            JOIN FETCH m.apartment a
+            WHERE m.id = :id AND a.deletedAt IS NULL
+            """)
+    Optional<ApartmentMediaEntity> findActiveById(@Param("id") Long id);
 
     @Query("SELECT COALESCE(MAX(m.displayOrder), -1) FROM ApartmentMediaEntity m WHERE m.apartment.id = :apartmentId")
     Integer findMaxDisplayOrderByApartmentId(@Param("apartmentId") Long apartmentId);

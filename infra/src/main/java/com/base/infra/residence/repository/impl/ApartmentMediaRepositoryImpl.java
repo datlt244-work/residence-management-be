@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -73,6 +74,21 @@ public class ApartmentMediaRepositoryImpl implements ApartmentMediaRepository {
         return toDomain(entity);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ApartmentMedia> findActiveMediaById(final String mediaId) {
+        final long pk = parseMediaPk(mediaId.strip());
+        return jpaApartmentMediaRepository.findActiveById(pk).map(ApartmentMediaRepositoryImpl::toDomain);
+    }
+
+    @Override
+    @Transactional
+    public void deleteMediaById(final String mediaId) {
+        final long pk = parseMediaPk(mediaId.strip());
+        jpaApartmentMediaRepository.deleteById(pk);
+        jpaApartmentMediaRepository.flush();
+    }
+
     private static String truncateMediaType(final String mediaType) {
         final String raw = mediaType != null ? mediaType.strip() : "FILE";
         if (raw.length() <= MEDIA_TYPE_MAX) {
@@ -99,6 +115,14 @@ public class ApartmentMediaRepositoryImpl implements ApartmentMediaRepository {
             return Long.parseLong(id);
         } catch (NumberFormatException ex) {
             throw new IllegalArgumentException("Invalid apartment id: " + id);
+        }
+    }
+
+    private static long parseMediaPk(final String id) {
+        try {
+            return Long.parseLong(id);
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Invalid media id: " + id);
         }
     }
 }

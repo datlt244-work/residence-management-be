@@ -10,6 +10,7 @@ import com.base.app.apartment.command.BulkDeleteApartmentsCommand;
 import com.base.app.apartment.command.UpdateApartmentCommand;
 import com.base.app.apartment.command.UpdateApartmentStatusCommand;
 import com.base.app.apartment.handler.BulkDeleteApartmentsHandler;
+import com.base.app.apartment.handler.DeleteApartmentMediaHandler;
 import com.base.app.apartment.handler.GetApartmentDetailHandler;
 import com.base.app.apartment.handler.GetApartmentOwnerInfoHandler;
 import com.base.app.apartment.handler.ListApartmentMediaHandler;
@@ -54,7 +55,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Validated
 @SecurityRequirement(name = "bearerAuth")
-@Tag(name = "Apartments", description = "Apartment inventory and search")
+@Tag(name = "Apartments", description = "Apartment inventory, media upload/delete, and search")
 public class ApartmentController {
 
     private final ListApartmentsHandler listApartmentsHandler;
@@ -66,6 +67,7 @@ public class ApartmentController {
     private final GetApartmentDetailHandler getApartmentDetailHandler;
     private final ListApartmentMediaHandler listApartmentMediaHandler;
     private final UploadApartmentMediaHandler uploadApartmentMediaHandler;
+    private final DeleteApartmentMediaHandler deleteApartmentMediaHandler;
 
     @GetMapping("/apartments")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
@@ -146,6 +148,20 @@ public class ApartmentController {
 
         ApartmentMediaItemDto dto = uploadApartmentMediaHandler.handle(request.toCommand(id));
         return ResponseEntity.ok(CommonResponse.success("Media uploaded successfully", dto));
+    }
+
+    @DeleteMapping("/media/{mediaId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(
+            summary = "Delete one apartment media file",
+            description =
+                    "Removes the media row and deletes the main and thumbnail objects from object storage when "
+                            + "MinIO/S3 is enabled. Only media belonging to a non-deleted apartment can be deleted. "
+                            + "ADMIN and MANAGER only.")
+    public ResponseEntity<CommonResponse<Void>> deleteApartmentMedia(
+            @Parameter(description = "Apartment media id") @PathVariable final String mediaId) {
+        deleteApartmentMediaHandler.handle(mediaId);
+        return ResponseEntity.ok(CommonResponse.success("Media deleted successfully", null));
     }
 
     @GetMapping("/apartments/{id}")

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -99,6 +100,23 @@ public class S3ApartmentMediaUrlSigning implements ApartmentMediaUrlSigning, Apa
                         .build(),
                 RequestBody.fromBytes(content));
         return key;
+    }
+
+    @Override
+    public void deleteObject(final String storageKeyOrUrl) {
+        if (storageKeyOrUrl == null || storageKeyOrUrl.isBlank()) {
+            return;
+        }
+        final S3Client s3Client = s3ClientProvider.getIfAvailable();
+        if (s3Client == null) {
+            return;
+        }
+        final String stored = storageKeyOrUrl.strip();
+        final ResolvedObject resolved = resolveBucketAndKey(stored);
+        if (resolved == null) {
+            throw new IllegalStateException("Could not resolve bucket/key for delete: " + stored);
+        }
+        s3Client.deleteObject(DeleteObjectRequest.builder().bucket(resolved.bucket()).key(resolved.key()).build());
     }
 
     private static String sanitizeFilename(final String originalFilename) {
