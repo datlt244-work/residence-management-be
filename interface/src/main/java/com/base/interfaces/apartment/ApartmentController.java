@@ -11,6 +11,7 @@ import com.base.app.apartment.command.UpdateApartmentCommand;
 import com.base.app.apartment.command.UpdateApartmentStatusCommand;
 import com.base.app.apartment.handler.BulkDeleteApartmentsHandler;
 import com.base.app.apartment.handler.DeleteApartmentMediaHandler;
+import com.base.app.apartment.handler.SetApartmentMediaPrimaryHandler;
 import com.base.app.apartment.handler.GetApartmentDetailHandler;
 import com.base.app.apartment.handler.GetApartmentOwnerInfoHandler;
 import com.base.app.apartment.handler.ListApartmentMediaHandler;
@@ -68,6 +69,7 @@ public class ApartmentController {
     private final ListApartmentMediaHandler listApartmentMediaHandler;
     private final UploadApartmentMediaHandler uploadApartmentMediaHandler;
     private final DeleteApartmentMediaHandler deleteApartmentMediaHandler;
+    private final SetApartmentMediaPrimaryHandler setApartmentMediaPrimaryHandler;
 
     @GetMapping("/apartments")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
@@ -162,6 +164,20 @@ public class ApartmentController {
             @Parameter(description = "Apartment media id") @PathVariable final String mediaId) {
         deleteApartmentMediaHandler.handle(mediaId);
         return ResponseEntity.ok(CommonResponse.success("Media deleted successfully", null));
+    }
+
+    @PatchMapping("/media/{mediaId}/primary")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(
+            summary = "Set apartment listing primary media",
+            description =
+                    "Marks this file as the primary media for its apartment (e.g. cover image in lists). "
+                            + "Clears primary on other media of the same apartment. "
+                            + "Media must belong to a non-deleted apartment. ADMIN and MANAGER only.")
+    public ResponseEntity<CommonResponse<ApartmentMediaItemDto>> setApartmentMediaPrimary(
+            @Parameter(description = "Apartment media id") @PathVariable final String mediaId) {
+        ApartmentMediaItemDto dto = setApartmentMediaPrimaryHandler.handle(mediaId);
+        return ResponseEntity.ok(CommonResponse.success("Primary media updated successfully", dto));
     }
 
     @GetMapping("/apartments/{id}")
