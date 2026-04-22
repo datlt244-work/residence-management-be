@@ -2,6 +2,7 @@ package com.base.infra.residence.repository;
 
 import com.base.infra.residence.entity.ApartmentMediaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -17,4 +18,11 @@ public interface JpaApartmentMediaRepository extends JpaRepository<ApartmentMedi
             ORDER BY m.displayOrder ASC, m.id ASC
             """)
     List<ApartmentMediaEntity> listForActiveApartment(@Param("apartmentId") Long apartmentId);
+
+    @Query("SELECT COALESCE(MAX(m.displayOrder), -1) FROM ApartmentMediaEntity m WHERE m.apartment.id = :apartmentId")
+    Integer findMaxDisplayOrderByApartmentId(@Param("apartmentId") Long apartmentId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE ApartmentMediaEntity m SET m.primary = false WHERE m.apartment.id = :apartmentId")
+    void clearPrimaryForApartment(@Param("apartmentId") Long apartmentId);
 }

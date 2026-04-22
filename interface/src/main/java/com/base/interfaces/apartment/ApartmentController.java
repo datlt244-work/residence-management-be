@@ -14,10 +14,12 @@ import com.base.app.apartment.handler.GetApartmentDetailHandler;
 import com.base.app.apartment.handler.GetApartmentOwnerInfoHandler;
 import com.base.app.apartment.handler.ListApartmentMediaHandler;
 import com.base.app.apartment.handler.ListApartmentsHandler;
+import com.base.app.apartment.handler.UploadApartmentMediaHandler;
 import com.base.app.apartment.handler.MoveApartmentsHandler;
 import com.base.app.apartment.handler.UpdateApartmentHandler;
 import com.base.app.apartment.handler.UpdateApartmentStatusHandler;
 import com.base.interfaces.apartment.request.MoveApartmentsRequest;
+import com.base.interfaces.apartment.request.UploadApartmentMediaRequest;
 import com.base.domain.shared.PageResult;
 import com.base.interfaces.shared.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,10 +27,12 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -61,6 +65,7 @@ public class ApartmentController {
     private final UpdateApartmentStatusHandler updateApartmentStatusHandler;
     private final GetApartmentDetailHandler getApartmentDetailHandler;
     private final ListApartmentMediaHandler listApartmentMediaHandler;
+    private final UploadApartmentMediaHandler uploadApartmentMediaHandler;
 
     @GetMapping("/apartments")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
@@ -124,6 +129,23 @@ public class ApartmentController {
             @Parameter(description = "Apartment id") @PathVariable final String id) {
         List<ApartmentMediaItemDto> items = listApartmentMediaHandler.handle(id);
         return ResponseEntity.ok(CommonResponse.success(items));
+    }
+
+    @PostMapping(value = "/apartments/{id}/media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(
+            summary = "Upload apartment media",
+            description =
+                    "Multipart form: part name `file` (image or video). Optional query/form fields: mediaType "
+                            + "(IMAGE, VIDEO, FILE — if omitted, inferred from file content type), primary (default false), "
+                            + "displayOrder (if omitted, appended after current max). "
+                            + "Requires object storage (minio.enabled=true and bucket configured). ADMIN and MANAGER only.")
+    public ResponseEntity<CommonResponse<ApartmentMediaItemDto>> uploadApartmentMedia(
+            @Parameter(description = "Apartment id") @PathVariable final String id,
+            @Valid @ModelAttribute final UploadApartmentMediaRequest request) {
+
+        ApartmentMediaItemDto dto = uploadApartmentMediaHandler.handle(request.toCommand(id));
+        return ResponseEntity.ok(CommonResponse.success("Media uploaded successfully", dto));
     }
 
     @GetMapping("/apartments/{id}")

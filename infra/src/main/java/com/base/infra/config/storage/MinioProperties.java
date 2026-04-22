@@ -17,4 +17,6 @@ public class MinioProperties {
     private String bucket = "";
     private boolean pathStyleAccess = true;
     private int presignDurationMinutes = 15;
+
+    private long maxUploadBytes = 104_857_600L;
 }

@@ -1,26 +1,36 @@
 package com.base.infra.config.storage;
 
+import com.base.domain.apartment.ApartmentMediaObjectStorage;
 import com.base.domain.apartment.ApartmentMediaUrlSigning;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 import java.net.URI;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Locale;
+import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class S3ApartmentMediaUrlSigning implements ApartmentMediaUrlSigning {
+public class S3ApartmentMediaUrlSigning implements ApartmentMediaUrlSigning, ApartmentMediaObjectStorage {
+
+    private static final Pattern SAFE_NAME = Pattern.compile("[^a-zA-Z0-9._-]+");
 
     private final MinioProperties minioProperties;
     private final ObjectProvider<S3Presigner> presignerProvider;
+    private final ObjectProvider<S3Client> s3ClientProvider;
 
     @Override
     public String presignGetUrl(final String storedUrlOrKey) {
@@ -50,6 +60,64 @@ public class S3ApartmentMediaUrlSigning implements ApartmentMediaUrlSigning {
             log.warn("Could not presign media URL, returning original reference: {}", ex.getMessage());
             return storedUrlOrKey;
         }
+    }
+
+    @Override
+    public String putObject(
+            final String apartmentId, final String originalFilename, final String contentType, final byte[] content) {
+        final S3Client s3Client = s3ClientProvider.getIfAvailable();
+        if (s3Client == null) {
+            throw new IllegalStateException(
+                    "Object storage is disabled (minio.enabled=false); apartment media upload is not available.");
+        }
+        final String bucket =
+                minioProperties.getBucket() != null ? minioProperties.getBucket().strip() : "";
+        if (bucket.isEmpty()) {
+            throw new IllegalStateException(
+                    "minio.bucket is empty. Set MINIO_BUCKET or minio.bucket in configuration, "
+                            + "and ensure that bucket exists on the MinIO/S3 server.");
+        }
+        final long max = minioProperties.getMaxUploadBytes();
+        if (content.length > max) {
+            throw new IllegalArgumentException("File exceeds maximum allowed size of " + max + " bytes");
+        }
+        if (content.length == 0) {
+            throw new IllegalArgumentException("Empty file");
+        }
+
+        final String safe = sanitizeFilename(originalFilename);
+        final String key = "apartments/" + apartmentId.strip() + "/" + UUID.randomUUID() + "_" + safe;
+        final String ct =
+                contentType != null && !contentType.isBlank() ? contentType.strip() : "application/octet-stream";
+
+        s3Client.putObject(
+                PutObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(key)
+                        .contentType(ct)
+                        .contentLength((long) content.length)
+                        .build(),
+                RequestBody.fromBytes(content));
+        return key;
+    }
+
+    private static String sanitizeFilename(final String originalFilename) {
+        if (originalFilename == null || originalFilename.isBlank()) {
+            return "upload.bin";
+        }
+        String base = originalFilename.strip();
+        final int slash = Math.max(base.lastIndexOf('/'), base.lastIndexOf('\\'));
+        if (slash >= 0 && slash < base.length() - 1) {
+            base = base.substring(slash + 1);
+        }
+        String cleaned = SAFE_NAME.matcher(base).replaceAll("_");
+        if (cleaned.isBlank()) {
+            cleaned = "upload.bin";
+        }
+        if (cleaned.length() > 120) {
+            cleaned = cleaned.substring(0, 120);
+        }
+        return cleaned.toLowerCase(Locale.ROOT);
     }
 
     private ResolvedObject resolveBucketAndKey(final String stored) {
