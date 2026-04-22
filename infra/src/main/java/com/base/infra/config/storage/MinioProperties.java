@@ -16,4 +16,5 @@ public class MinioProperties {
     private String region = "us-east-1";
     private String bucket = "";
     private boolean pathStyleAccess = true;
+    private int presignDurationMinutes = 15;
 }

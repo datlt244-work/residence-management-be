@@ -118,6 +118,7 @@ public class ApartmentController {
             summary = "List apartment media files",
             description =
                     "Returns all image/video/file rows for the apartment (url, type, order, primary flag). "
+                            + "When MinIO/S3 is enabled, url and thumbnailUrl are presigned GET links (see minio.presign-duration-minutes). "
                             + "Apartment must exist and not be soft-deleted. Authenticated ADMIN, MANAGER, or STAFF.")
     public ResponseEntity<CommonResponse<List<ApartmentMediaItemDto>>> listApartmentMedia(
             @Parameter(description = "Apartment id") @PathVariable final String id) {
