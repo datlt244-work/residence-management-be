@@ -4,7 +4,6 @@ import com.base.app.auth.command.LoginEmailCommand;
 import com.base.app.auth.dto.LoginResponseDto;
 import com.base.app.employee.dto.EmployeeDto;
 import com.base.domain.employee.domain.Employee;
-import com.base.domain.employee.domain.EmployeeRole;
 import com.base.domain.employee.repository.EmployeeRepository;
 import com.base.domain.user.domain.valueobjects.Email;
 import com.base.infra.config.security.service.JwtService;
@@ -19,32 +18,28 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AdminLoginHandler {
+public class EmployeeLoginHandler {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final EmployeeRepository employeeRepository;
 
     @Transactional(readOnly = true)
-    public LoginResponseDto handle(LoginEmailCommand command) {
-        log.info("Admin portal login attempt for email: {}", command.email());
-
-        Employee employee = employeeRepository.findByEmail(Email.of(command.email()))
-                .orElseThrow(() -> new BadCredentialsException("Invalid admin credentials"));
-
-        if (employee.getRole() != EmployeeRole.ADMIN) {
-            log.warn("Security: employee {} with role {} attempted admin portal login", employee.getId(), employee.getRole());
-            throw new BadCredentialsException("Access denied: only ADMIN can use this portal.");
-        }
+    public LoginResponseDto handle(final LoginEmailCommand command) {
+        log.info("Login attempt for email: {}", command.email());
 
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(command.email(), command.password())
-        );
+                new UsernamePasswordAuthenticationToken(command.email(), command.password()));
 
-        String accessToken = jwtService.generateToken(employee);
-        Long expiresIn = jwtService.getExpirationTime();
+        final Employee employee =
+                employeeRepository
+                        .findByEmail(Email.of(command.email()))
+                        .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
-        log.info("Admin login successful for email: {}", command.email());
+        final String accessToken = jwtService.generateToken(employee);
+        final Long expiresIn = jwtService.getExpirationTime();
+
+        log.info("Login successful for email: {} (role: {})", command.email(), employee.getRole());
         return LoginResponseDto.of(accessToken, "Bearer", expiresIn, EmployeeDto.fromDomain(employee));
     }
 }
